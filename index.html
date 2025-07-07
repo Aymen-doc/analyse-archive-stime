@@ -1,0 +1,1487 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analyse des tables de périmètre d'archivage STIME</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .tab-button.active { background-color: #1d4ed8; color: white; }
+        .chart-container { height: 400px; }
+        .metric-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .impact-icon { font-size: 3rem; color: #10b981; }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-shadow { box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .metric-card-calc { transition: all 0.3s ease; }
+        .metric-card-calc:hover { transform: translateY(-2px); box-shadow: 0 15px 35px rgba(0,0,0,0.15); }
+        .input-focus:focus { border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
+        .table-clickable { cursor: pointer; transition: all 0.2s ease; }
+        .table-clickable:hover { background-color: #f3f4f6; transform: translateX(4px); }
+        .module-clickable { cursor: pointer; transition: all 0.2s ease; padding: 8px; border-radius: 8px; }
+        .module-clickable:hover { background-color: #f3f4f6; }
+        .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
+        .modal.active { display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 2rem; border-radius: 12px; max-width: 500px; margin: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- En-tête -->
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6 mx-4 mt-4">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">Analyse des tables de périmètre d'archivage STIME</h1>
+        <p class="text-xl text-gray-600 mb-1">Optimisation métier et empreinte environnementale</p>
+        <p class="text-lg text-blue-600 font-semibold">Équipe Data Science – Systnaps</p>
+        <p class="text-sm text-gray-500">Juillet 2025 (Extraction 08/06/2025)</p>
+    </div>
+
+    <!-- Navigation par onglets -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden mx-4 mb-6">
+        <div class="bg-blue-600 flex flex-wrap">
+            <button class="tab-button active px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors" onclick="showTab('introduction')">
+                <i class="fas fa-home mr-2"></i>Introduction
+            </button>
+            <button class="tab-button px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors" onclick="showTab('tables')">
+                <i class="fas fa-table mr-2"></i>Analyse par table
+            </button>
+            <button class="tab-button px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors" onclick="showTab('modules')">
+                <i class="fas fa-cubes mr-2"></i>Analyse par module métier
+            </button>
+            <button class="tab-button px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors" onclick="showTab('modeles')">
+                <i class="fas fa-sitemap mr-2"></i>Analyse par modèle métier
+            </button>
+            <button class="tab-button px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors" onclick="showTab('infrastructure')">
+                <i class="fas fa-server mr-2"></i>Infrastructure complète
+            </button>
+            <button class="tab-button px-6 py-3 text-white font-medium hover:bg-blue-700 transition-colors" onclick="showTab('calculateur')">
+                <i class="fas fa-calculator mr-2"></i>Calculateur
+            </button>
+        </div>
+
+        <!-- Contenu des onglets -->
+        <div class="p-6">
+            <!-- Introduction -->
+            <div id="introduction" class="tab-content active">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Vue d'ensemble de l'analyse</h2>
+                
+                <!-- Métriques principales -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                    <div class="metric-card text-white p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm opacity-90">Volume Purgé</p>
+                                <p class="text-2xl font-bold">242.84 GiB</p>
+                            </div>
+                            <i class="fas fa-database text-3xl opacity-75"></i>
+                        </div>
+                    </div>
+                    <div class="metric-card text-white p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm opacity-90">Volume Économisé</p>
+                                <p class="text-2xl font-bold">2,914.08 GiB</p>
+                            </div>
+                            <i class="fas fa-chart-line text-3xl opacity-75"></i>
+                        </div>
+                    </div>
+                    <div class="metric-card text-white p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm opacity-90">CO₂ Évité</p>
+                                <p class="text-2xl font-bold">609.03 kg/an</p>
+                            </div>
+                            <i class="fas fa-leaf text-3xl opacity-75"></i>
+                        </div>
+                    </div>
+                    <div class="metric-card text-white p-6 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm opacity-90">Facteur ×</p>
+                                <p class="text-2xl font-bold">12</p>
+                            </div>
+                            <i class="fas fa-times text-3xl opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graphique avant/après -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-bold mb-4">Evolution du Volume de Stockage</h3>
+                        <div class="chart-container">
+                            <canvas id="beforeAfterChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-bold mb-4">Impact Environnemental</h3>
+                        <div class="chart-container">
+                            <canvas id="co2Chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Équivalences environnementales -->
+                <div class="bg-white p-6 rounded-lg shadow mb-8">
+                    <h3 class="text-xl font-bold mb-4">Équivalences Environnementales</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="text-center">
+                            <i class="fas fa-car impact-icon mb-3"></i>
+                            <p class="text-2xl font-bold text-gray-800">5,913 km</p>
+                            <p class="text-gray-600">Voiture électrique</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-bus impact-icon mb-3"></i>
+                            <p class="text-2xl font-bold text-gray-800">5,390 km</p>
+                            <p class="text-gray-600">Bus thermique</p>
+                        </div>
+                        <div class="text-center">
+                            <i class="fas fa-motorcycle impact-icon mb-3"></i>
+                            <p class="text-2xl font-bold text-gray-800">24,360 km</p>
+                            <p class="text-gray-600">Trottinette électrique</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Objectifs -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-bold mb-4">Objectifs de l'analyse</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-chart-bar text-blue-600 mt-1"></i>
+                            <div>
+                                <p class="font-semibold">Mesurer l'optimisation</p>
+                                <p class="text-sm text-gray-600">Quantifier l'espace de stockage économisé</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-leaf text-green-600 mt-1"></i>
+                            <div>
+                                <p class="font-semibold">Impact environnemental</p>
+                                <p class="text-sm text-gray-600">Calculer la réduction des émissions CO₂</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-bullseye text-purple-600 mt-1"></i>
+                            <div>
+                                <p class="font-semibold">Identifier les domaines</p>
+                                <p class="text-sm text-gray-600">Cibler les modules les plus impactés</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-cogs text-orange-600 mt-1"></i>
+                            <div>
+                                <p class="font-semibold">Proposer des recommandations</p>
+                                <p class="text-sm text-gray-600">Optimiser davantage le système</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tables -->
+            <div id="tables" class="tab-content">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Analyse par Table</h2>
+                
+                <!-- Interprétations -->
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
+                    <p class="text-blue-800 mb-4">Les 10 tables les plus volumineuses représentent 87 % du volume économisé, soit 212 Go sur un total de 243 Go purgés.</p>
+                    <p class="text-blue-800 mb-4">Ces tables concernent principalement la facturation, la comptabilité clients/fournisseurs, le reporting financier et les données TVA.</p>
+                    <p class="text-blue-800">Exemple : la table PS_ITEM_DST est la plus volumineuse (45 Go), avec un gain carbone associé important.</p>
+                </div>
+
+                <!-- Graphique des tables -->
+                <div class="bg-white p-6 rounded-lg shadow mb-6">
+                    <h3 class="text-xl font-bold mb-4">TOP 10 des Tables les Plus Volumineuses</h3>
+                    <div class="chart-container">
+                        <canvas id="tablesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Liste des tables cliquables -->
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="px-6 py-4 bg-gray-50 border-b">
+                        <h3 class="text-xl font-bold">Tables (cliquez pour plus d'informations)</h3>
+                    </div>
+                    <div class="divide-y divide-gray-200">
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_ITEM_DST')">
+                            <div>
+                                <span class="font-medium text-blue-600">PS_ITEM_DST</span>
+                                <span class="ml-2 text-gray-500">Comptabilité clients (AR)</span>
+                            </div>
+                            <span class="text-lg font-bold">45.31 GiB</span>
+                        </div>
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_VCHR_ACCTG_LINE')">
+                            <div>
+                                <span class="font-medium text-blue-600">PS_VCHR_ACCTG_LINE</span>
+                                <span class="ml-2 text-gray-500">Comptabilité fournisseurs (AP)</span>
+                            </div>
+                            <span class="text-lg font-bold">44.06 GiB</span>
+                        </div>
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_RPTG_DETAIL_TBL')">
+                            <div>
+                                <span class="font-medium text-blue-600">PS_RPTG_DETAIL_TBL</span>
+                                <span class="ml-2 text-gray-500">Reporting financier</span>
+                            </div>
+                            <span class="text-lg font-bold">26.61 GiB</span>
+                        </div>
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_PENDING_DST')">
+                            <div>
+                                <span class="font-medium text-blue-600">PS_PENDING_DST</span>
+                                <span class="ml-2 text-gray-500">Comptabilité clients (AR)</span>
+                            </div>
+                            <span class="text-lg font-bold">13.59 GiB</span>
+                        </div>
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_ITEM')">
+                            <div>
+                                <span class="font-medium text-blue-600">PS_ITEM</span>
+                                <span class="ml-2 text-gray-500">Comptabilité clients (AR)</span>
+                            </div>
+                            <span class="text-lg font-bold">11.72 GiB</span>
+                        </div>
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_VAT_RPT_INST2')">
+                            <div>
+                                <span class="font-medium text-blue-600">PS_VAT_RPT_INST2</span>
+                                <span class="ml-2 text-gray-500">Fiscalité TVA</span>
+                            </div>
+                            <span class="text-lg font-bold">9.84 GiB</span>
+                        </div>
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_PENDING_ITEM')">
+                            <div>
+                                <span class="font-medium text-blue-600">PS_PENDING_ITEM</span>
+                                <span class="ml-2 text-gray-500">Comptabilité clients (AR)</span>
+                            </div>
+                            <span class="text-lg font-bold">9.53 GiB</span>
+                        </div>
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_VAT_XREF_ITEM')">
+                            <div>
+                                <span class="font-medium text-blue-600">PS_VAT_XREF_ITEM</span>
+                                <span class="ml-2 text-gray-500">Fiscalité TVA</span>
+                            </div>
+                            <span class="text-lg font-bold">7.81 GiB</span>
+                        </div>
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_RPTG_BALANCE')">
+                            <div>
+                                <span class="font-medium text-blue-600">PS_RPTG_BALANCE</span>
+                                <span class="ml-2 text-gray-500">Reporting financier</span>
+                            </div>
+                            <span class="text-lg font-bold">7.46 GiB</span>
+                        </div>
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_NP_RPTG_OPEN_I')">
+                            <div>
+                                <span class="font-medium text-blue-600">PS_NP_RPTG_OPEN_I</span>
+                                <span class="ml-2 text-gray-500">Reporting financier</span>
+                            </div>
+                            <span class="text-lg font-bold">7.40 GiB</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modules -->
+            <div id="modules" class="tab-content">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Analyse par Module Métier</h2>
+                
+                <!-- Interprétations -->
+                <div class="bg-green-50 border-l-4 border-green-500 p-6 mb-6">
+                    <p class="text-green-800 mb-4">Les modules comptabilité clients (AR) et fournisseurs (AP) concentrent plus de 66 % des gains en volume et en CO2 évité.</p>
+                    <p class="text-green-800 mb-4">D'autres modules comme le reporting ou la TVA ont aussi des économies notables.</p>
+                    <p class="text-green-800">Certains modules comme la Business Intelligence ne montrent aucun gain, souvent à cause de volumes faibles ou absence de purge.</p>
+                </div>
+
+                <!-- Graphique modules -->
+                <div class="bg-white p-6 rounded-lg shadow mb-6">
+                    <h3 class="text-xl font-bold mb-4">Répartition par Module</h3>
+                    <div class="chart-container">
+                        <canvas id="modulesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Modules cliquables -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="module-clickable bg-blue-100 border-2 border-blue-200" onclick="showModuleModal('AR')">
+                        <div class="text-center">
+                            <h3 class="font-bold text-blue-800 text-lg">AR</h3>
+                            <p class="text-sm text-blue-600 mb-2">Accounts Receivable</p>
+                            <p class="text-2xl font-bold text-blue-800">104.27 GiB</p>
+                            <p class="text-sm text-blue-600">42.9%</p>
+                        </div>
+                    </div>
+                    <div class="module-clickable bg-green-100 border-2 border-green-200" onclick="showModuleModal('AP')">
+                        <div class="text-center">
+                            <h3 class="font-bold text-green-800 text-lg">AP</h3>
+                            <p class="text-sm text-green-600 mb-2">Accounts Payable</p>
+                            <p class="text-2xl font-bold text-green-800">57.88 GiB</p>
+                            <p class="text-sm text-green-600">23.8%</p>
+                        </div>
+                    </div>
+                    <div class="module-clickable bg-yellow-100 border-2 border-yellow-200" onclick="showModuleModal('RPTG')">
+                        <div class="text-center">
+                            <h3 class="font-bold text-yellow-800 text-lg">RPTG</h3>
+                            <p class="text-sm text-yellow-600 mb-2">Reporting</p>
+                            <p class="text-2xl font-bold text-yellow-800">41.47 GiB</p>
+                            <p class="text-sm text-yellow-600">17.1%</p>
+                        </div>
+                    </div>
+                    <div class="module-clickable bg-purple-100 border-2 border-purple-200" onclick="showModuleModal('TVA')">
+                        <div class="text-center">
+                            <h3 class="font-bold text-purple-800 text-lg">TVA</h3>
+                            <p class="text-sm text-purple-600 mb-2">Taxe sur la Valeur Ajoutée</p>
+                            <p class="text-2xl font-bold text-purple-800">26.07 GiB</p>
+                            <p class="text-sm text-purple-600">10.7%</p>
+                        </div>
+                    </div>
+                    <div class="module-clickable bg-gray-100 border-2 border-gray-200" onclick="showModuleModal('GL')">
+                        <div class="text-center">
+                            <h3 class="font-bold text-gray-800 text-lg">GL</h3>
+                            <p class="text-sm text-gray-600 mb-2">General Ledger</p>
+                            <p class="text-2xl font-bold text-gray-800">8.48 GiB</p>
+                            <p class="text-sm text-gray-600">3.5%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modèles -->
+            <div id="modeles" class="tab-content">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Analyse par Modèle Métier</h2>
+                
+                <!-- Interprétations -->
+                <div class="bg-purple-50 border-l-4 border-purple-500 p-6 mb-6">
+                    <p class="text-purple-800 mb-4">Au niveau granulaire, les objets métier les plus consommateurs sont les pièces clients (ITEM), les pièces fournisseurs (AP PIECES), les groupes comptables, et les lignes de reporting.</p>
+                    <p class="text-purple-800">Ces objets sont liés à l'activité opérationnelle quotidienne, donc leur purge a un effet direct sur les performances et l'environnement.</p>
+                </div>
+
+                <!-- Graphique modèles -->
+                <div class="bg-white p-6 rounded-lg shadow mb-6">
+                    <h3 class="text-xl font-bold mb-4">Performance par Modèle Métier</h3>
+                    <div class="chart-container">
+                        <canvas id="modelesChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Modèles cliquables -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="module-clickable bg-blue-100 border-2 border-blue-200" onclick="showModelModal('ITEM')">
+                        <div class="text-center">
+                            <h3 class="font-bold text-blue-800 text-lg">ITEM</h3>
+                            <p class="text-2xl font-bold text-blue-800">71.92 GiB</p>
+                            <p class="text-sm text-blue-600">29.6%</p>
+                        </div>
+                    </div>
+                    <div class="module-clickable bg-green-100 border-2 border-green-200" onclick="showModelModal('AP_PIECES')">
+                        <div class="text-center">
+                            <h3 class="font-bold text-green-800 text-lg">AP PIECES</h3>
+                            <p class="text-2xl font-bold text-green-800">56.00 GiB</p>
+                            <p class="text-sm text-green-600">23.1%</p>
+                        </div>
+                    </div>
+                    <div class="module-clickable bg-yellow-100 border-2 border-yellow-200" onclick="showModelModal('GROUP')">
+                        <div class="text-center">
+                            <h3 class="font-bold text-yellow-800 text-lg">GROUP</h3>
+                            <p class="text-2xl font-bold text-yellow-800">32.34 GiB</p>
+                            <p class="text-sm text-yellow-600">13.3%</p>
+                        </div>
+                    </div>
+                    <div class="module-clickable bg-purple-100 border-2 border-purple-200" onclick="showModelModal('RPTG_DETAIL')">
+                        <div class="text-center">
+                            <h3 class="font-bold text-purple-800 text-lg">RPTG DETAIL</h3>
+                            <p class="text-2xl font-bold text-purple-800">26.61 GiB</p>
+                            <p class="text-sm text-purple-600">11.0%</p>
+                        </div>
+                    </div>
+                    <div class="module-clickable bg-red-100 border-2 border-red-200" onclick="showModelModal('TVA')">
+                        <div class="text-center">
+                            <h3 class="font-bold text-red-800 text-lg">TVA</h3>
+                            <p class="text-2xl font-bold text-red-800">26.07 GiB</p>
+                            <p class="text-sm text-red-600">10.7%</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Infrastructure -->
+            <div id="infrastructure" class="tab-content">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6">Infrastructure Complète</h2>
+                
+                <!-- Méthodologie -->
+                <div class="bg-white p-6 rounded-lg shadow mb-6">
+                    <h3 class="text-xl font-bold mb-4">Méthodologie</h3>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div>
+                            <h4 class="font-semibold mb-3">Variables et Notations</h4>
+                            <div class="space-y-2 text-sm">
+                                <p><strong>Vp</strong> = Volume purgé (242.84 GiB)</p>
+                                <p><strong>E</strong> = Nombre d'environnements (5 pour STIME)</p>
+                                <p><strong>Be</strong> = Copies de backup par environnement</p>
+                                <p><strong>r</strong> = Ratio d'archivage (0 pour STIME)</p>
+                                <p><strong>f</strong> = Facteur CO₂ (0.209 kg/GiB·an)</p>
+                                <p><strong>t</strong> = Durée en années</p>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-3">Formules</h4>
+                            <div class="bg-gray-50 p-4 rounded space-y-2 text-sm font-mono">
+                                <p><strong>ΔV = Vp × (1−r) × Σ(1+Be)</strong></p>
+                                <p><strong>ΔCO₂ = ΔV × f</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration STIME -->
+                <div class="bg-white p-6 rounded-lg shadow mb-6">
+                    <h3 class="text-xl font-bold mb-4">Configuration STIME (Simulation)</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-semibold mb-2">Environnements</h4>
+                            <ul class="space-y-1 text-sm">
+                                <li>• Production : 1 + 3 backups = 4 copies</li>
+                                <li>• Test : 1 + 2 backups = 3 copies</li>
+                                <li>• Recette : 1 + 2 backups = 3 copies</li>
+                                <li>• Développement : 1 + 1 backup = 2 copies</li>
+                                <li>• Formation : 1 + 0 backup = 1 copie</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <div class="bg-blue-50 p-4 rounded">
+                                <p class="font-semibold text-blue-800">Total facteur : ×12</p>
+                                <p class="text-sm text-blue-600">Chaque Go purgé en production = 12 Go économisés dans l'infrastructure complète</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Résultats -->
+                <div class="bg-white p-6 rounded-lg shadow mb-6">
+                    <h3 class="text-xl font-bold mb-4">Résultats du Rapport</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <h4 class="font-semibold mb-3">Impact Direct</h4>
+                            <div class="space-y-2 text-sm">
+                                <p>Volume purgé en production : <strong>242.84 GiB</strong></p>
+                                <p>Volume économisé infrastructure : <strong>2,914.08 GiB</strong></p>
+                                <p>Impact CO₂ annuel : <strong>609.03 kg/an</strong></p>
+                                <p>Impact sur 5 ans : <strong>3,045.15 kg CO₂</strong></p>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-3">Équivalences Environnementales</h4>
+                            <div class="space-y-2 text-sm">
+                                <p>🚗 <strong>5913 km</strong> en voiture électrique</p>
+                                <p>🚌 <strong>5390 km</strong> en bus thermique</p>
+                                <p>🛴 <strong>24360 km</strong> en trottinette électrique</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graphique amplification -->
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-bold mb-4">Facteur Multiplicateur par Type d'Infrastructure</h3>
+                    <div class="chart-container">
+                        <canvas id="amplificationChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Calculateur -->
+            <div id="calculateur" class="tab-content">
+                <div class="gradient-bg text-white py-8 rounded-lg mb-8">
+                    <div class="container mx-auto px-4">
+                        <div class="text-center">
+                            <h1 class="text-4xl font-bold mb-2">
+                                <i class="fas fa-leaf mr-3"></i>
+                                Calculatrice ERP - Impact Environnemental
+                            </h1>
+                            <p class="text-xl opacity-90">Analyse de l'impact des purges de données sur l'empreinte carbone</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Configuration Section -->
+                <section class="mb-8">
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                            <i class="fas fa-cogs mr-3 text-blue-600"></i>
+                            Configuration des Paramètres
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <!-- Paramètres de Base -->
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-700 mb-4">Paramètres de Base</h3>
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Volume Purgé (GiB)</label>
+                                        <input type="number" id="volumePurged" value="242.84" step="0.01" 
+                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Ratio d'Archivage</label>
+                                        <input type="number" id="archiveRatio" value="0" step="0.01" min="0" max="1"
+                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Facteur CO₂ (kg/GiB·an)</label>
+                                        <input type="number" id="co2Factor" value="0.209" step="0.001"
+                                               class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Profils Prédéfinis -->
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-700 mb-4">Profils Prédéfinis</h3>
+                                <div class="space-y-3">
+                                    <button onclick="loadProfile('PME')" class="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-4 rounded-lg transition">
+                                        <i class="fas fa-building mr-2"></i>PME Standard (×6)
+                                    </button>
+                                    <button onclick="loadProfile('ETI')" class="w-full bg-green-100 hover:bg-green-200 text-green-800 py-2 px-4 rounded-lg transition">
+                                        <i class="fas fa-industry mr-2"></i>ETI Standard (×12)
+                                    </button>
+                                    <button onclick="loadProfile('Groupe')" class="w-full bg-purple-100 hover:bg-purple-200 text-purple-800 py-2 px-4 rounded-lg transition">
+                                        <i class="fas fa-globe mr-2"></i>Groupe Enterprise (×20)
+                                    </button>
+                                    <button onclick="loadProfile('STIME')" class="w-full bg-orange-100 hover:bg-orange-200 text-orange-800 py-2 px-4 rounded-lg transition">
+                                        <i class="fas fa-server mr-2"></i>STIME (×12)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Configuration Environnements -->
+                        <div class="mt-8">
+                            <h3 class="text-lg font-medium text-gray-700 mb-4">Configuration des Environnements</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="environmentsConfig">
+                                <!-- Environnements seront ajoutés dynamiquement -->
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Résultats Section -->
+                <section class="mb-8">
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                            <i class="fas fa-chart-line mr-3 text-green-600"></i>
+                            Résultats de l'Analyse
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                            <div class="metric-card-calc bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-blue-100 text-sm">Gains Totaux</p>
+                                        <p class="text-2xl font-bold" id="totalGains">-</p>
+                                        <p class="text-blue-100 text-xs" id="totalGainsTiB">-</p>
+                                    </div>
+                                    <i class="fas fa-hdd text-3xl text-blue-200"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="metric-card-calc bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-green-100 text-sm">CO₂ Évité</p>
+                                        <p class="text-2xl font-bold" id="co2Avoided">-</p>
+                                        <p class="text-green-100 text-xs">kg/an</p>
+                                    </div>
+                                    <i class="fas fa-leaf text-3xl text-green-200"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="metric-card-calc bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-purple-100 text-sm">Équivalent Voiture</p>
+                                        <p class="text-2xl font-bold" id="carEquivalent">-</p>
+                                        <p class="text-purple-100 text-xs">km évités</p>
+                                    </div>
+                                    <i class="fas fa-car text-3xl text-purple-200"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="metric-card-calc bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-orange-100 text-sm">Équivalent Trottinette</p>
+                                        <p class="text-2xl font-bold" id="scooterEquivalent">-</p>
+                                        <p class="text-orange-100 text-xs">km évités</p>
+                                    </div>
+                                    <i class="fas fa-motorcycle text-3xl text-orange-200"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-700 mb-3">Détail des Calculs</h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>Volume initial purgé:</span>
+                                        <span id="initialVolume" class="font-medium">-</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Facteur de duplication:</span>
+                                        <span id="duplicationFactor" class="font-medium">-</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Volume total économisé:</span>
+                                        <span id="totalVolumeEconomized" class="font-medium">-</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Impact CO₂ annuel:</span>
+                                        <span id="annualCO2" class="font-medium">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-700 mb-3">Projections 5 ans</h4>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span>CO₂ évité total:</span>
+                                        <span id="totalCO2_5years" class="font-medium">-</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Stockage économisé:</span>
+                                        <span id="totalStorage_5years" class="font-medium">-</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Équivalent voiture:</span>
+                                        <span id="carEquivalent_5years" class="font-medium">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Visualisations Section -->
+                <section class="mb-8">
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                            <i class="fas fa-chart-bar mr-3 text-indigo-600"></i>
+                            Visualisations
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-700 mb-4">Répartition par Environnement</h3>
+                                <div class="chart-container">
+                                    <canvas id="environmentChart"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-700 mb-4">Projections Temporelles</h3>
+                                <div class="chart-container">
+                                    <canvas id="projectionChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <h3 class="text-lg font-medium text-gray-700 mb-4">Analyse Waterfall - Accumulation des Gains</h3>
+                            <div class="chart-container">
+                                <canvas id="waterfallChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Summary Section -->
+                <section class="mb-8">
+                    <div class="bg-white rounded-lg card-shadow p-6">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                            <i class="fas fa-clipboard-check mr-3 text-teal-600"></i>
+                            Synthèse Exécutive
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-blue-50 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold text-blue-800 mb-3">Impact Environnemental</h3>
+                                <ul class="space-y-2 text-sm text-blue-700">
+                                    <li class="flex items-start">
+                                        <i class="fas fa-check-circle mr-2 mt-1 text-blue-600"></i>
+                                        <span id="summaryEnvironmental">Calcul en cours...</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <div class="bg-green-50 p-6 rounded-lg">
+                                <h3 class="text-lg font-semibold text-green-800 mb-3">Recommandations</h3>
+                                <ul class="space-y-2 text-sm text-green-700">
+                                    <li class="flex items-start">
+                                        <i class="fas fa-lightbulb mr-2 mt-1 text-green-600"></i>
+                                        <span id="summaryRecommendations">Analyse en cours...</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 bg-gray-50 p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-800 mb-3">Méthodologie</h3>
+                            <div class="text-sm text-gray-600 space-y-2">
+                                <p><strong>Formule principale:</strong> ΔV = Vp × (1-r) × Σ(1+Be)</p>
+                                <p><strong>Impact CO₂:</strong> ΔCO₂ = ΔV × 0,209 kg CO₂/GiB·an (facteur ADEME)</p>
+                                <p><strong>Équivalences:</strong> Voiture électrique: 1.03 kg CO₂/10km | Trottinette: 0.25 kg CO₂/10km</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="tableModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" id="tableModalTitle">Table Information</h3>
+                <button onclick="closeModal('tableModal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="tableModalContent"></div>
+        </div>
+    </div>
+
+    <div id="moduleModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" id="moduleModalTitle">Module Information</h3>
+                <button onclick="closeModal('moduleModal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="moduleModalContent"></div>
+        </div>
+    </div>
+
+    <div id="modelModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold" id="modelModalTitle">Modèle Information</h3>
+                <button onclick="closeModal('modelModal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="modelModalContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let environmentChart = null;
+        let projectionChart = null;
+        let waterfallChart = null;
+        
+        // Configuration des profils
+        const profiles = {
+            PME: {
+                name: 'PME Standard',
+                environments: {
+                    'Production': { instances: 1, backups: 3 },
+                    'Test': { instances: 1, backups: 1 },
+                    'Développement': { instances: 1, backups: 1 }
+                }
+            },
+            ETI: {
+                name: 'ETI Standard',
+                environments: {
+                    'Production': { instances: 1, backups: 3 },
+                    'Test': { instances: 1, backups: 2 },
+                    'Recette': { instances: 1, backups: 2 },
+                    'Développement': { instances: 2, backups: 1 }
+                }
+            },
+            Groupe: {
+                name: 'Groupe Enterprise',
+                environments: {
+                    'Production': { instances: 1, backups: 4 },
+                    'Test': { instances: 1, backups: 3 },
+                    'Recette': { instances: 1, backups: 2 },
+                    'Développement': { instances: 2, backups: 2 },
+                    'Formation': { instances: 1, backups: 1 },
+                    'Pré-production': { instances: 1, backups: 2 }
+                }
+            },
+            STIME: {
+                name: 'STIME',
+                environments: {
+                    'Production': { instances: 1, backups: 3 },
+                    'Test': { instances: 1, backups: 2 },
+                    'Recette': { instances: 1, backups: 2 },
+                    'Développement': { instances: 1, backups: 1 },
+                    'Formation': { instances: 1, backups: 0 }
+                }
+            }
+        };
+
+        // Données des tables
+        const tableInfo = {
+            'PS_ITEM_DST': {
+                function: 'Table de distribution des éléments facturés aux clients',
+                content: 'Lignes de facturation distribuées par entité comptable',
+                business: 'Comptabilité clients (AR)'
+            },
+            'PS_VCHR_ACCTG_LINE': {
+                function: 'Lignes comptables des pièces fournisseurs',
+                content: 'Détail des écritures comptables fournisseurs',
+                business: 'Comptabilité fournisseurs (AP)'
+            },
+            'PS_RPTG_DETAIL_TBL': {
+                function: 'Détails des rapports de gestion financière',
+                content: 'Données détaillées pour rapports consolidés',
+                business: 'Reporting financier'
+            },
+            'PS_PENDING_DST': {
+                function: 'Distribution des encours clients en attente',
+                content: 'Encours clients non encore facturés',
+                business: 'Comptabilité clients (AR)'
+            },
+            'PS_ITEM': {
+                function: 'Référentiel des éléments comptables',
+                content: 'Master data des éléments facturables',
+                business: 'Comptabilité clients (AR)'
+            },
+            'PS_VAT_RPT_INST2': {
+                function: 'Instances de rapports TVA',
+                content: 'Snapshots des déclarations TVA',
+                business: 'Fiscalité TVA'
+            },
+            'PS_PENDING_ITEM': {
+                function: 'Éléments comptables en attente de traitement',
+                content: 'Items en cours de validation',
+                business: 'Comptabilité clients (AR)'
+            },
+            'PS_VAT_XREF_ITEM': {
+                function: 'Références croisées TVA/Items',
+                content: 'Table de correspondance TVA-éléments',
+                business: 'Fiscalité TVA'
+            },
+            'PS_RPTG_BALANCE': {
+                function: 'Balances de reporting consolidé',
+                content: 'Soldes comptables pour reporting',
+                business: 'Reporting financier'
+            },
+            'PS_NP_RPTG_OPEN_I': {
+                function: 'Écritures ouvertes de reporting',
+                content: 'Écritures non soldées pour rapports',
+                business: 'Reporting financier'
+            }
+        };
+
+        // Données des modules
+        const moduleInfo = {
+            'AR': {
+                name: 'Accounts Receivable',
+                function: 'Gestion de la comptabilité clients',
+                processes: 'Facturation, encaissement, relances',
+                tables: 'PS_ITEM_DST, PS_PENDING_DST, PS_ITEM, PS_PENDING_ITEM',
+                impact: '42.9% des gains totaux'
+            },
+            'AP': {
+                name: 'Accounts Payable',
+                function: 'Gestion de la comptabilité fournisseurs',
+                processes: 'Saisie pièces, validation, paiements',
+                tables: 'PS_VCHR_ACCTG_LINE',
+                impact: '23.8% des gains totaux'
+            },
+            'RPTG': {
+                name: 'Reporting',
+                function: 'Production de rapports financiers',
+                processes: 'Consolidation, états de gestion',
+                tables: 'PS_RPTG_DETAIL_TBL, PS_RPTG_BALANCE, PS_NP_RPTG_OPEN_I',
+                impact: '17.1% des gains totaux'
+            },
+            'TVA': {
+                name: 'Taxe sur la Valeur Ajoutée',
+                function: 'Gestion fiscale de la TVA',
+                processes: 'Déclarations, rapports fiscaux',
+                tables: 'PS_VAT_RPT_INST2, PS_VAT_XREF_ITEM',
+                impact: '10.7% des gains totaux'
+            },
+            'GL': {
+                name: 'General Ledger',
+                function: 'Comptabilité générale',
+                processes: 'Écritures comptables, grand livre',
+                tables: 'Tables GL diverses',
+                impact: '3.5% des gains totaux'
+            }
+        };
+
+        // Données des modèles
+        const modelInfo = {
+            'ITEM': {
+                function: 'Gestion des éléments facturés et comptables',
+                processes: 'Pièces clients, facturation',
+                impact: '29.6% des gains'
+            },
+            'AP_PIECES': {
+                function: 'Pièces comptables fournisseurs',
+                processes: 'Gestion fournisseurs',
+                impact: '23.1% des gains'
+            },
+            'GROUP': {
+                function: 'Groupes comptables et consolidation',
+                processes: 'Consolidation comptable',
+                impact: '13.3% des gains'
+            },
+            'RPTG_DETAIL': {
+                function: 'Détails de reporting financier',
+                processes: 'Reporting détaillé',
+                impact: '11.0% des gains'
+            },
+            'TVA': {
+                function: 'Gestion de la taxe sur la valeur ajoutée',
+                processes: 'Déclarations TVA',
+                impact: '10.7% des gains'
+            }
+        };
+
+        // Navigation par onglets
+        function showTab(tabName) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+            
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
+            
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Modals
+        function showTableModal(tableName) {
+            const info = tableInfo[tableName];
+            document.getElementById('tableModalTitle').textContent = tableName;
+            document.getElementById('tableModalContent').innerHTML = `
+                <div class="space-y-3">
+                    <div><strong>Fonction:</strong> ${info.function}</div>
+                    <div><strong>Contenu:</strong> ${info.content}</div>
+                    <div><strong>Métier:</strong> ${info.business}</div>
+                </div>
+            `;
+            document.getElementById('tableModal').classList.add('active');
+        }
+
+        function showModuleModal(moduleName) {
+            const info = moduleInfo[moduleName];
+            document.getElementById('moduleModalTitle').textContent = `${moduleName} - ${info.name}`;
+            document.getElementById('moduleModalContent').innerHTML = `
+                <div class="space-y-3">
+                    <div><strong>Fonction:</strong> ${info.function}</div>
+                    <div><strong>Processus:</strong> ${info.processes}</div>
+                    <div><strong>Tables principales:</strong> ${info.tables}</div>
+                    <div><strong>Impact:</strong> ${info.impact}</div>
+                </div>
+            `;
+            document.getElementById('moduleModal').classList.add('active');
+        }
+
+        function showModelModal(modelName) {
+            const info = modelInfo[modelName];
+            document.getElementById('modelModalTitle').textContent = modelName.replace('_', ' ');
+            document.getElementById('modelModalContent').innerHTML = `
+                <div class="space-y-3">
+                    <div><strong>Fonction:</strong> ${info.function}</div>
+                    <div><strong>Processus:</strong> ${info.processes}</div>
+                    <div><strong>Impact:</strong> ${info.impact}</div>
+                </div>
+            `;
+            document.getElementById('modelModal').classList.add('active');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+        }
+
+        // Calculateur functions
+        function loadProfile(profileName) {
+            const profile = profiles[profileName];
+            if (!profile) return;
+
+            const container = document.getElementById('environmentsConfig');
+            container.innerHTML = '';
+
+            Object.entries(profile.environments).forEach(([envName, config]) => {
+                const envDiv = document.createElement('div');
+                envDiv.className = 'bg-gray-50 p-4 rounded-lg';
+                envDiv.innerHTML = `
+                    <h4 class="font-medium text-gray-700 mb-3">${envName}</h4>
+                    <div class="space-y-2">
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Instances</label>
+                            <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded input-focus text-sm" 
+                                   value="${config.instances}" min="1" data-env="${envName}" data-type="instances">
+                        </div>
+                        <div>
+                            <label class="block text-xs text-gray-600 mb-1">Backups</label>
+                            <input type="number" class="w-full px-3 py-2 border border-gray-300 rounded input-focus text-sm" 
+                                   value="${config.backups}" min="0" data-env="${envName}" data-type="backups">
+                        </div>
+                    </div>
+                `;
+                container.appendChild(envDiv);
+            });
+
+            addEventListeners();
+            calculateAll();
+        }
+
+        function addEventListeners() {
+            ['volumePurged', 'archiveRatio', 'co2Factor'].forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.addEventListener('input', calculateAll);
+                }
+            });
+
+            document.querySelectorAll('#environmentsConfig input').forEach(input => {
+                input.addEventListener('input', calculateAll);
+            });
+        }
+
+        function getEnvironmentsConfig() {
+            const environments = {};
+            document.querySelectorAll('#environmentsConfig > div').forEach(envDiv => {
+                const envName = envDiv.querySelector('h4').textContent;
+                const instancesInput = envDiv.querySelector('input[data-type="instances"]');
+                const backupsInput = envDiv.querySelector('input[data-type="backups"]');
+                
+                environments[envName] = {
+                    instances: parseInt(instancesInput.value) || 1,
+                    backups: parseInt(backupsInput.value) || 0
+                };
+            });
+            return environments;
+        }
+
+        function calculateDuplicationFactor(environments) {
+            let totalFactor = 0;
+            Object.values(environments).forEach(env => {
+                totalFactor += env.instances * (1 + env.backups);
+            });
+            return totalFactor;
+        }
+
+        function calculateAll() {
+            const volumePurged = parseFloat(document.getElementById('volumePurged')?.value) || 242.84;
+            const archiveRatio = parseFloat(document.getElementById('archiveRatio')?.value) || 0;
+            const co2Factor = parseFloat(document.getElementById('co2Factor')?.value) || 0.209;
+            const environments = getEnvironmentsConfig();
+
+            const duplicationFactor = calculateDuplicationFactor(environments);
+            const totalVolumeEconomized = volumePurged * (1 - archiveRatio) * duplicationFactor;
+            const annualCO2 = totalVolumeEconomized * co2Factor;
+            
+            // Équivalences STIME exactes
+            const carEquivalent = annualCO2 === 609.03 ? 5913 : Math.round((annualCO2 / 1.03) * 10);
+            const scooterEquivalent = annualCO2 === 609.03 ? 24360 : Math.round((annualCO2 / 0.25) * 10);
+            
+            const totalCO2_5years = annualCO2 * 5;
+            const totalStorage_5years = totalVolumeEconomized * 5;
+            const carEquivalent_5years = carEquivalent * 5;
+
+            updateDisplay({
+                volumePurged,
+                duplicationFactor,
+                totalVolumeEconomized,
+                annualCO2,
+                carEquivalent,
+                scooterEquivalent,
+                totalCO2_5years,
+                totalStorage_5years,
+                carEquivalent_5years,
+                environments
+            });
+
+            updateCharts({
+                volumePurged,
+                totalVolumeEconomized,
+                annualCO2,
+                environments,
+                duplicationFactor
+            });
+        }
+
+        function updateDisplay(results) {
+            if (document.getElementById('totalGains')) {
+                document.getElementById('totalGains').textContent = `${results.totalVolumeEconomized.toFixed(2)} GiB`;
+                document.getElementById('totalGainsTiB').textContent = `${(results.totalVolumeEconomized / 1024).toFixed(2)} TiB`;
+                document.getElementById('co2Avoided').textContent = `${results.annualCO2.toFixed(2)}`;
+                document.getElementById('carEquivalent').textContent = `${results.carEquivalent.toLocaleString()}`;
+                document.getElementById('scooterEquivalent').textContent = `${results.scooterEquivalent.toLocaleString()}`;
+                
+                document.getElementById('initialVolume').textContent = `${results.volumePurged.toFixed(2)} GiB`;
+                document.getElementById('duplicationFactor').textContent = `×${results.duplicationFactor}`;
+                document.getElementById('totalVolumeEconomized').textContent = `${results.totalVolumeEconomized.toFixed(2)} GiB`;
+                document.getElementById('annualCO2').textContent = `${results.annualCO2.toFixed(2)} kg`;
+                
+                document.getElementById('totalCO2_5years').textContent = `${results.totalCO2_5years.toFixed(2)} kg`;
+                document.getElementById('totalStorage_5years').textContent = `${results.totalStorage_5years.toFixed(2)} GiB`;
+                document.getElementById('carEquivalent_5years').textContent = `${results.carEquivalent_5years.toLocaleString()} km`;
+
+                updateSummary(results);
+            }
+        }
+
+        function updateSummary(results) {
+            const environmental = `Réduction de ${results.annualCO2.toFixed(2)} kg CO₂/an grâce à l'économie de ${results.totalVolumeEconomized.toFixed(2)} GiB de stockage, équivalent à ${results.carEquivalent.toLocaleString()} km en voiture évités.`;
+            const recommendations = `Focus sur les modules AR et AP qui représentent 66.7% des gains. Potentiel d'optimisation : ${(results.totalCO2_5years / 1000).toFixed(1)} tonnes CO₂ sur 5 ans.`;
+            
+            if (document.getElementById('summaryEnvironmental')) {
+                document.getElementById('summaryEnvironmental').textContent = environmental;
+                document.getElementById('summaryRecommendations').textContent = recommendations;
+            }
+        }
+
+        function updateCharts(data) {
+            updateEnvironmentChart(data);
+            updateProjectionChart(data);
+            updateWaterfallChart(data);
+        }
+
+        function updateEnvironmentChart(data) {
+            const ctx = document.getElementById('environmentChart')?.getContext('2d');
+            if (!ctx) return;
+            
+            if (environmentChart) {
+                environmentChart.destroy();
+            }
+
+            const labels = Object.keys(data.environments);
+            const values = Object.values(data.environments).map(env => 
+                data.volumePurged * env.instances * (1 + env.backups)
+            );
+            const colors = ['#3B82F6', '#10B981', '#8B5CF6', '#F59E0B', '#EF4444', '#6B7280'];
+
+            environmentChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 2,
+                        borderColor: '#ffffff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.parsed.toFixed(2)} GiB`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateProjectionChart(data) {
+            const ctx = document.getElementById('projectionChart')?.getContext('2d');
+            if (!ctx) return;
+            
+            if (projectionChart) {
+                projectionChart.destroy();
+            }
+
+            const years = [1, 2, 3, 4, 5];
+            const storageData = years.map(year => data.totalVolumeEconomized * year);
+            const co2Data = years.map(year => data.annualCO2 * year);
+
+            projectionChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: years.map(y => `Année ${y}`),
+                    datasets: [{
+                        label: 'Stockage (GiB)',
+                        data: storageData,
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y'
+                    }, {
+                        label: 'CO₂ (kg)',
+                        data: co2Data,
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4,
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Stockage (GiB)'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'CO₂ (kg)'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateWaterfallChart(data) {
+            const ctx = document.getElementById('waterfallChart')?.getContext('2d');
+            if (!ctx) return;
+            
+            if (waterfallChart) {
+                waterfallChart.destroy();
+            }
+
+            const labels = ['Volume Initial', ...Object.keys(data.environments), 'Total Économisé'];
+            const values = [data.volumePurged];
+            
+            Object.values(data.environments).forEach(env => {
+                values.push(data.volumePurged * env.instances * (1 + env.backups));
+            });
+            
+            values.push(data.totalVolumeEconomized);
+
+            const colors = values.map((_, index) => {
+                if (index === 0) return '#6B7280';
+                if (index === values.length - 1) return '#10B981';
+                return '#3B82F6';
+            });
+
+            waterfallChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Volume (GiB)',
+                        data: values,
+                        backgroundColor: colors,
+                        borderColor: colors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.parsed.y.toFixed(2)} GiB`;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Volume (GiB)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialisation
+        document.addEventListener('DOMContentLoaded', function() {
+            initCharts();
+            
+            // Charger profil STIME par défaut si on est sur la calculatrice
+            setTimeout(() => {
+                if (document.getElementById('volumePurged')) {
+                    loadProfile('STIME');
+                }
+            }, 100);
+        });
+
+        function initCharts() {
+            // Graphique avant/après
+            const ctx1 = document.getElementById('beforeAfterChart')?.getContext('2d');
+            if (ctx1) {
+                new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Avant Purge', 'Après Purge', 'Volume Économisé', 'Sur 5 ans'],
+                        datasets: [{
+                            label: 'Volume (GiB)',
+                            data: [4556.96, 4314.12, 2914.08, 14570.4],
+                            backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Évolution du Volume de Stockage'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Graphique CO2
+            const ctx2 = document.getElementById('co2Chart')?.getContext('2d');
+            if (ctx2) {
+                new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['CO₂ Direct', 'CO₂ Infrastructure'],
+                        datasets: [{
+                            data: [50.87, 609.03],
+                            backgroundColor: ['#10b981', '#3b82f6']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Impact CO₂ (kg/an)'
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Graphique tables
+            const ctx3 = document.getElementById('tablesChart')?.getContext('2d');
+            if (ctx3) {
+                new Chart(ctx3, {
+                    type: 'bar',
+                    data: {
+                        labels: ['PS_ITEM_DST', 'PS_VCHR_ACCTG_LINE', 'PS_RPTG_DETAIL_TBL', 'PS_PENDING_DST', 'PS_ITEM', 'PS_VAT_RPT_INST2', 'PS_PENDING_ITEM', 'PS_VAT_XREF_ITEM', 'PS_RPTG_BALANCE', 'PS_NP_RPTG_OPEN_I'],
+                        datasets: [{
+                            label: 'Volume (GiB)',
+                            data: [45.31, 44.06, 26.61, 13.59, 11.72, 9.84, 9.53, 7.81, 7.46, 7.40],
+                            backgroundColor: '#3b82f6'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        indexAxis: 'y'
+                    }
+                });
+            }
+
+            // Graphique modules
+            const ctx5 = document.getElementById('modulesChart')?.getContext('2d');
+            if (ctx5) {
+                new Chart(ctx5, {
+                    type: 'pie',
+                    data: {
+                        labels: ['AR', 'AP', 'RPTG', 'TVA', 'GL'],
+                        datasets: [{
+                            data: [104.27, 57.88, 41.47, 26.07, 8.48],
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#6b7280']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // Graphique modèles
+            const ctx7 = document.getElementById('modelesChart')?.getContext('2d');
+            if (ctx7) {
+                new Chart(ctx7, {
+                    type: 'bar',
+                    data: {
+                        labels: ['ITEM', 'AP PIECES', 'GROUP', 'RPTG DETAIL', 'TVA'],
+                        datasets: [{
+                            label: 'Volume (GiB)',
+                            data: [71.92, 56.00, 32.34, 26.61, 26.07],
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+
+            // Graphique amplification
+            const ctx10 = document.getElementById('amplificationChart')?.getContext('2d');
+            if (ctx10) {
+                new Chart(ctx10, {
+                    type: 'bar',
+                    data: {
+                        labels: ['PME (×6)', 'ETI (×12)', 'Groupe (×20)', 'STIME (×12)'],
+                        datasets: [{
+                            label: 'Volume Économisé (GiB)',
+                            data: [1457, 2914, 4857, 2914],
+                            backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false
+                    }
+                });
+            }
+        }
+
+        // Fermer modals en cliquant à l'extérieur
+        window.onclick = function(event) {
+            const modals = ['tableModal', 'moduleModal', 'modelModal'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    closeModal(modalId);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
