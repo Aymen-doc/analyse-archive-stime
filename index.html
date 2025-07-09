@@ -28,15 +28,154 @@
         .modal { display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); }
         .modal.active { display: flex; align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 2rem; border-radius: 12px; max-width: 500px; margin: 1rem; box-shadow: 0 25px 50px rgba(0,0,0,0.2); }
+        
+        /* Styles pour l'édition améliorés */
+        .editable { position: relative; }
+        .editable:hover .edit-btn, .editable:hover .color-btn { opacity: 1; }
+        .edit-btn, .color-btn { 
+            opacity: 0; 
+            position: absolute; 
+            top: -5px; 
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            border-radius: 50%; 
+            width: 24px; 
+            height: 24px; 
+            cursor: pointer; 
+            font-size: 12px;
+            transition: opacity 0.3s;
+            z-index: 10;
+        }
+        .edit-btn { right: -5px; }
+        .color-btn { right: 25px; background: #8b5cf6; }
+        
+        .edit-toolbar { 
+            position: fixed; 
+            top: 10px; 
+            right: 10px; 
+            background: white; 
+            padding: 10px; 
+            border-radius: 8px; 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); 
+            z-index: 1001;
+            display: none;
+        }
+        
+        /* Menu contextuel */
+        .context-menu {
+            position: fixed;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            padding: 4px 0;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1002;
+            min-width: 150px;
+        }
+        .context-menu .menu-item {
+            padding: 8px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+        }
+        .context-menu .menu-item:hover {
+            background-color: #f3f4f6;
+        }
+        
+        .chart-bar:hover { cursor: pointer; opacity: 0.8; }
+        
+        /* Chatbot styles */
+        .chatbot { 
+            position: fixed; 
+            bottom: 20px; 
+            right: 20px; 
+            z-index: 1000; 
+        }
+        .chatbot-button { 
+            width: 60px; 
+            height: 60px; 
+            border-radius: 50%; 
+            background: #3b82f6; 
+            color: white; 
+            border: none; 
+            cursor: pointer; 
+            font-size: 24px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .chatbot-window { 
+            position: absolute; 
+            bottom: 70px; 
+            right: 0; 
+            width: 350px; 
+            height: 400px; 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2); 
+            display: none;
+            flex-direction: column;
+        }
+        .chatbot-header { 
+            background: #3b82f6; 
+            color: white; 
+            padding: 15px; 
+            border-radius: 12px 12px 0 0; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
+        .chatbot-messages { 
+            flex: 1; 
+            padding: 15px; 
+            overflow-y: auto; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px;
+        }
+        .chatbot-input { 
+            display: flex; 
+            padding: 15px; 
+            border-top: 1px solid #e5e7eb;
+        }
+        .message { 
+            max-width: 80%; 
+            padding: 8px 12px; 
+            border-radius: 12px; 
+            word-wrap: break-word;
+        }
+        .user-message { 
+            background: #3b82f6; 
+            color: white; 
+            align-self: flex-end; 
+        }
+        .bot-message { 
+            background: #f3f4f6; 
+            color: #374151; 
+            align-self: flex-start; 
+        }
     </style>
 </head>
 <body class="bg-gray-50">
+    <!-- Barre d'outils d'édition -->
+    <div id="editToolbar" class="edit-toolbar">
+        <div class="flex gap-2">
+            <button onclick="enableEditMode()" class="px-3 py-1 bg-blue-500 text-white rounded text-sm">
+                <i class="fas fa-edit"></i> Éditer
+            </button>
+            <button onclick="saveChanges()" class="px-3 py-1 bg-green-500 text-white rounded text-sm">
+                <i class="fas fa-save"></i> Enregistrer
+            </button>
+        </div>
+    </div>
+
     <!-- En-tête -->
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-6 mx-4 mt-4">
-        <h1 class="text-4xl font-bold text-gray-800 mb-2">Analyse des tables de périmètre d'archivage STIME</h1>
-        <p class="text-xl text-gray-600 mb-1">Optimisation métier et empreinte environnementale</p>
-        <p class="text-lg text-blue-600 font-semibold">Équipe Data Science – Systnaps</p>
-        <p class="text-sm text-gray-500">Juillet 2025 (Extraction 08/06/2025)</p>
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-6 mx-4 mt-4 editable" data-element="header">
+        <h1 class="text-4xl font-bold text-gray-800 mb-2 editable" data-element="title">Analyse des tables de périmètre d'archivage STIME</h1>
+        <p class="text-xl text-gray-600 mb-1 editable" data-element="subtitle">Optimisation métier et empreinte environnementale</p>
+        <p class="text-lg text-blue-600 font-semibold editable" data-element="team">Équipe Data Science – Systnaps</p>
+        <p class="text-sm text-gray-500 editable" data-element="date">Juillet 2025 (Extraction 08/06/2025)</p>
     </div>
 
     <!-- Navigation par onglets -->
@@ -66,38 +205,47 @@
         <div class="p-6">
             <!-- Introduction -->
             <div id="introduction" class="tab-content active">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6">Vue d'ensemble de l'analyse</h2>
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 editable" data-element="intro-title">Vue d'ensemble de l'analyse</h2>
                 
                 <!-- Métriques principales -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-                    <div class="metric-card text-white p-6 rounded-lg">
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+                    <div class="metric-card text-white p-6 rounded-lg editable" data-element="metric1">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm opacity-90">Tables Analysées</p>
+                                <p class="text-2xl font-bold">235</p>
+                            </div>
+                            <i class="fas fa-table text-3xl opacity-75"></i>
+                        </div>
+                    </div>
+                    <div class="metric-card text-white p-6 rounded-lg editable" data-element="metric2">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm opacity-90">Volume Purgé</p>
-                                <p class="text-2xl font-bold">242.84 GiB</p>
+                                <p class="text-2xl font-bold">242.84 Go</p>
                             </div>
                             <i class="fas fa-database text-3xl opacity-75"></i>
                         </div>
                     </div>
-                    <div class="metric-card text-white p-6 rounded-lg">
+                    <div class="metric-card text-white p-6 rounded-lg editable" data-element="metric3">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm opacity-90">Volume Économisé</p>
-                                <p class="text-2xl font-bold">2,914.08 GiB</p>
+                                <p class="text-2xl font-bold">2914 Go</p>
                             </div>
                             <i class="fas fa-chart-line text-3xl opacity-75"></i>
                         </div>
                     </div>
-                    <div class="metric-card text-white p-6 rounded-lg">
+                    <div class="metric-card text-white p-6 rounded-lg editable" data-element="metric4">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm opacity-90">CO₂ Évité</p>
-                                <p class="text-2xl font-bold">609.03 kg/an</p>
+                                <p class="text-2xl font-bold">50.87 kg/an</p>
                             </div>
                             <i class="fas fa-leaf text-3xl opacity-75"></i>
                         </div>
                     </div>
-                    <div class="metric-card text-white p-6 rounded-lg">
+                    <div class="metric-card text-white p-6 rounded-lg editable" data-element="metric5">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-sm opacity-90">Facteur ×</p>
@@ -108,70 +256,80 @@
                     </div>
                 </div>
 
-                <!-- Graphique avant/après -->
+                <!-- Graphiques séparés - Avant/Après et Gains -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 class="text-xl font-bold mb-4">Evolution du Volume de Stockage</h3>
+                    <div class="bg-white p-6 rounded-lg shadow editable" data-element="chart1-container">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold editable" data-element="chart1-title">Avant / Après Purge</h3>
+                            <button onclick="changeChartType('beforeAfterChart')" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-chart-bar"></i>
+                            </button>
+                        </div>
                         <div class="chart-container">
                             <canvas id="beforeAfterChart"></canvas>
                         </div>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <h3 class="text-xl font-bold mb-4">Impact Environnemental</h3>
+                    <div class="bg-white p-6 rounded-lg shadow editable" data-element="chart2-container">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold editable" data-element="chart2-title">Gains Économisés (×12 Infrastructure + 5 ans)</h3>
+                            <button onclick="changeChartType('gainsChart')" class="text-blue-600 hover:text-blue-800">
+                                <i class="fas fa-chart-bar"></i>
+                            </button>
+                        </div>
                         <div class="chart-container">
-                            <canvas id="co2Chart"></canvas>
+                            <canvas id="gainsChart"></canvas>
                         </div>
                     </div>
                 </div>
 
                 <!-- Équivalences environnementales -->
-                <div class="bg-white p-6 rounded-lg shadow mb-8">
-                    <h3 class="text-xl font-bold mb-4">Équivalences Environnementales</h3>
+                <div class="bg-white p-6 rounded-lg shadow mb-8 editable" data-element="equivalences">
+                    <h3 class="text-xl font-bold mb-4 editable" data-element="equiv-title">Équivalences Environnementales</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="text-center">
+                        <div class="text-center editable" data-element="equiv1">
                             <i class="fas fa-car impact-icon mb-3"></i>
-                            <p class="text-2xl font-bold text-gray-800">5,913 km</p>
+                            <p class="text-2xl font-bold text-gray-800">494 km</p>
                             <p class="text-gray-600">Voiture électrique</p>
                         </div>
-                        <div class="text-center">
+                        <div class="text-center editable" data-element="equiv2">
                             <i class="fas fa-bus impact-icon mb-3"></i>
-                            <p class="text-2xl font-bold text-gray-800">5,390 km</p>
+                            <p class="text-2xl font-bold text-gray-800">450 km</p>
                             <p class="text-gray-600">Bus thermique</p>
                         </div>
-                        <div class="text-center">
+                        <div class="text-center editable" data-element="equiv3">
                             <i class="fas fa-motorcycle impact-icon mb-3"></i>
-                            <p class="text-2xl font-bold text-gray-800">24,360 km</p>
+                            <p class="text-2xl font-bold text-gray-800">2035 km</p>
                             <p class="text-gray-600">Trottinette électrique</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Objectifs -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-xl font-bold mb-4">Objectifs de l'analyse</h3>
+                <div class="bg-white p-6 rounded-lg shadow editable" data-element="objectives">
+                    <h3 class="text-xl font-bold mb-4 editable" data-element="obj-title">Objectifs de l'analyse</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="flex items-start space-x-3">
+                        <div class="flex items-start space-x-3 editable" data-element="obj1">
                             <i class="fas fa-chart-bar text-blue-600 mt-1"></i>
                             <div>
                                 <p class="font-semibold">Mesurer l'optimisation</p>
                                 <p class="text-sm text-gray-600">Quantifier l'espace de stockage économisé</p>
                             </div>
                         </div>
-                        <div class="flex items-start space-x-3">
+                        <div class="flex items-start space-x-3 editable" data-element="obj2">
                             <i class="fas fa-leaf text-green-600 mt-1"></i>
                             <div>
                                 <p class="font-semibold">Impact environnemental</p>
                                 <p class="text-sm text-gray-600">Calculer la réduction des émissions CO₂</p>
                             </div>
                         </div>
-                        <div class="flex items-start space-x-3">
+                        <div class="flex items-start space-x-3 editable" data-element="obj3">
                             <i class="fas fa-bullseye text-purple-600 mt-1"></i>
                             <div>
                                 <p class="font-semibold">Identifier les domaines</p>
                                 <p class="text-sm text-gray-600">Cibler les modules les plus impactés</p>
                             </div>
                         </div>
-                        <div class="flex items-start space-x-3">
+                        <div class="flex items-start space-x-3 editable" data-element="obj4">
                             <i class="fas fa-cogs text-orange-600 mt-1"></i>
                             <div>
                                 <p class="font-semibold">Proposer des recommandations</p>
@@ -184,98 +342,103 @@
 
             <!-- Tables -->
             <div id="tables" class="tab-content">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6">Analyse par Table</h2>
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 editable" data-element="tables-title">Analyse par Table</h2>
                 
                 <!-- Interprétations -->
-                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6">
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-6 mb-6 editable" data-element="tables-interpretation">
                     <p class="text-blue-800 mb-4">Les 10 tables les plus volumineuses représentent 87 % du volume économisé, soit 212 Go sur un total de 243 Go purgés.</p>
                     <p class="text-blue-800 mb-4">Ces tables concernent principalement la facturation, la comptabilité clients/fournisseurs, le reporting financier et les données TVA.</p>
                     <p class="text-blue-800">Exemple : la table PS_ITEM_DST est la plus volumineuse (45 Go), avec un gain carbone associé important.</p>
                 </div>
 
                 <!-- Graphique des tables -->
-                <div class="bg-white p-6 rounded-lg shadow mb-6">
-                    <h3 class="text-xl font-bold mb-4">TOP 10 des Tables les Plus Volumineuses</h3>
+                <div class="bg-white p-6 rounded-lg shadow mb-6 editable" data-element="tables-chart">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold editable" data-element="tables-chart-title">TOP 10 des Tables les Plus Volumineuses</h3>
+                        <button onclick="changeChartType('tablesChart')" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
                     <div class="chart-container">
                         <canvas id="tablesChart"></canvas>
                     </div>
                 </div>
 
                 <!-- Liste des tables cliquables -->
-                <div class="bg-white rounded-lg shadow overflow-hidden">
+                <div class="bg-white rounded-lg shadow overflow-hidden editable" data-element="tables-list">
                     <div class="px-6 py-4 bg-gray-50 border-b">
-                        <h3 class="text-xl font-bold">Tables (cliquez pour plus d'informations)</h3>
+                        <h3 class="text-xl font-bold editable" data-element="tables-list-title">Tables (cliquez pour plus d'informations)</h3>
                     </div>
                     <div class="divide-y divide-gray-200">
-                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_ITEM_DST')">
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center editable" data-element="table1" onclick="showTableModal('PS_ITEM_DST')">
                             <div>
                                 <span class="font-medium text-blue-600">PS_ITEM_DST</span>
                                 <span class="ml-2 text-gray-500">Comptabilité clients (AR)</span>
                             </div>
-                            <span class="text-lg font-bold">45.31 GiB</span>
+                            <span class="text-lg font-bold">45.31 Go</span>
                         </div>
-                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_VCHR_ACCTG_LINE')">
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center editable" data-element="table2" onclick="showTableModal('PS_VCHR_ACCTG_LINE')">
                             <div>
                                 <span class="font-medium text-blue-600">PS_VCHR_ACCTG_LINE</span>
                                 <span class="ml-2 text-gray-500">Comptabilité fournisseurs (AP)</span>
                             </div>
-                            <span class="text-lg font-bold">44.06 GiB</span>
+                            <span class="text-lg font-bold">44.06 Go</span>
                         </div>
-                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_RPTG_DETAIL_TBL')">
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center editable" data-element="table3" onclick="showTableModal('PS_RPTG_DETAIL_TBL')">
                             <div>
                                 <span class="font-medium text-blue-600">PS_RPTG_DETAIL_TBL</span>
                                 <span class="ml-2 text-gray-500">Reporting financier</span>
                             </div>
-                            <span class="text-lg font-bold">26.61 GiB</span>
+                            <span class="text-lg font-bold">26.61 Go</span>
                         </div>
-                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_PENDING_DST')">
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center editable" data-element="table4" onclick="showTableModal('PS_PENDING_DST')">
                             <div>
                                 <span class="font-medium text-blue-600">PS_PENDING_DST</span>
                                 <span class="ml-2 text-gray-500">Comptabilité clients (AR)</span>
                             </div>
-                            <span class="text-lg font-bold">13.59 GiB</span>
+                            <span class="text-lg font-bold">13.59 Go</span>
                         </div>
-                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_ITEM')">
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center editable" data-element="table5" onclick="showTableModal('PS_ITEM')">
                             <div>
                                 <span class="font-medium text-blue-600">PS_ITEM</span>
                                 <span class="ml-2 text-gray-500">Comptabilité clients (AR)</span>
                             </div>
-                            <span class="text-lg font-bold">11.72 GiB</span>
+                            <span class="text-lg font-bold">11.72 Go</span>
                         </div>
-                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_VAT_RPT_INST2')">
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center editable" data-element="table6" onclick="showTableModal('PS_VAT_RPT_INST2')">
                             <div>
                                 <span class="font-medium text-blue-600">PS_VAT_RPT_INST2</span>
                                 <span class="ml-2 text-gray-500">Fiscalité TVA</span>
                             </div>
-                            <span class="text-lg font-bold">9.84 GiB</span>
+                            <span class="text-lg font-bold">9.84 Go</span>
                         </div>
-                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_PENDING_ITEM')">
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center editable" data-element="table7" onclick="showTableModal('PS_PENDING_ITEM')">
                             <div>
                                 <span class="font-medium text-blue-600">PS_PENDING_ITEM</span>
                                 <span class="ml-2 text-gray-500">Comptabilité clients (AR)</span>
                             </div>
-                            <span class="text-lg font-bold">9.53 GiB</span>
+                            <span class="text-lg font-bold">9.53 Go</span>
                         </div>
-                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_VAT_XREF_ITEM')">
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center editable" data-element="table8" onclick="showTableModal('PS_VAT_XREF_ITEM')">
                             <div>
                                 <span class="font-medium text-blue-600">PS_VAT_XREF_ITEM</span>
                                 <span class="ml-2 text-gray-500">Fiscalité TVA</span>
                             </div>
-                            <span class="text-lg font-bold">7.81 GiB</span>
+                            <span class="text-lg font-bold">7.81 Go</span>
                         </div>
-                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_RPTG_BALANCE')">
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center editable" data-element="table9" onclick="showTableModal('PS_RPTG_BALANCE')">
                             <div>
                                 <span class="font-medium text-blue-600">PS_RPTG_BALANCE</span>
                                 <span class="ml-2 text-gray-500">Reporting financier</span>
                             </div>
-                            <span class="text-lg font-bold">7.46 GiB</span>
+                            <span class="text-lg font-bold">7.46 Go</span>
                         </div>
-                        <div class="table-clickable px-6 py-4 flex justify-between items-center" onclick="showTableModal('PS_NP_RPTG_OPEN_I')">
+                        <div class="table-clickable px-6 py-4 flex justify-between items-center editable" data-element="table10" onclick="showTableModal('PS_NP_RPTG_OPEN_I')">
                             <div>
                                 <span class="font-medium text-blue-600">PS_NP_RPTG_OPEN_I</span>
                                 <span class="ml-2 text-gray-500">Reporting financier</span>
                             </div>
-                            <span class="text-lg font-bold">7.40 GiB</span>
+                            <span class="text-lg font-bold">7.40 Go</span>
                         </div>
                     </div>
                 </div>
@@ -283,18 +446,23 @@
 
             <!-- Modules -->
             <div id="modules" class="tab-content">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6">Analyse par Module Métier</h2>
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 editable" data-element="modules-title">Analyse par Module Métier</h2>
                 
                 <!-- Interprétations -->
-                <div class="bg-green-50 border-l-4 border-green-500 p-6 mb-6">
+                <div class="bg-green-50 border-l-4 border-green-500 p-6 mb-6 editable" data-element="modules-interpretation">
                     <p class="text-green-800 mb-4">Les modules comptabilité clients (AR) et fournisseurs (AP) concentrent plus de 66 % des gains en volume et en CO2 évité.</p>
                     <p class="text-green-800 mb-4">D'autres modules comme le reporting ou la TVA ont aussi des économies notables.</p>
                     <p class="text-green-800">Certains modules comme la Business Intelligence ne montrent aucun gain, souvent à cause de volumes faibles ou absence de purge.</p>
                 </div>
 
                 <!-- Graphique modules -->
-                <div class="bg-white p-6 rounded-lg shadow mb-6">
-                    <h3 class="text-xl font-bold mb-4">Répartition par Module</h3>
+                <div class="bg-white p-6 rounded-lg shadow mb-6 editable" data-element="modules-chart">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold editable" data-element="modules-chart-title">Répartition par Module (9 modules)</h3>
+                        <button onclick="changeChartType('modulesChart')" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-chart-pie"></i>
+                        </button>
+                    </div>
                     <div class="chart-container">
                         <canvas id="modulesChart"></canvas>
                     </div>
@@ -302,43 +470,43 @@
 
                 <!-- Modules cliquables -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div class="module-clickable bg-blue-100 border-2 border-blue-200" onclick="showModuleModal('AR')">
+                    <div class="module-clickable bg-blue-100 border-2 border-blue-200 editable" data-element="module-ar" onclick="showModuleModal('AR')">
                         <div class="text-center">
                             <h3 class="font-bold text-blue-800 text-lg">AR</h3>
                             <p class="text-sm text-blue-600 mb-2">Accounts Receivable</p>
-                            <p class="text-2xl font-bold text-blue-800">104.27 GiB</p>
+                            <p class="text-2xl font-bold text-blue-800">104.27 Go</p>
                             <p class="text-sm text-blue-600">42.9%</p>
                         </div>
                     </div>
-                    <div class="module-clickable bg-green-100 border-2 border-green-200" onclick="showModuleModal('AP')">
+                    <div class="module-clickable bg-green-100 border-2 border-green-200 editable" data-element="module-ap" onclick="showModuleModal('AP')">
                         <div class="text-center">
                             <h3 class="font-bold text-green-800 text-lg">AP</h3>
                             <p class="text-sm text-green-600 mb-2">Accounts Payable</p>
-                            <p class="text-2xl font-bold text-green-800">57.88 GiB</p>
+                            <p class="text-2xl font-bold text-green-800">57.88 Go</p>
                             <p class="text-sm text-green-600">23.8%</p>
                         </div>
                     </div>
-                    <div class="module-clickable bg-yellow-100 border-2 border-yellow-200" onclick="showModuleModal('RPTG')">
+                    <div class="module-clickable bg-yellow-100 border-2 border-yellow-200 editable" data-element="module-rptg" onclick="showModuleModal('RPTG')">
                         <div class="text-center">
                             <h3 class="font-bold text-yellow-800 text-lg">RPTG</h3>
                             <p class="text-sm text-yellow-600 mb-2">Reporting</p>
-                            <p class="text-2xl font-bold text-yellow-800">41.47 GiB</p>
+                            <p class="text-2xl font-bold text-yellow-800">41.47 Go</p>
                             <p class="text-sm text-yellow-600">17.1%</p>
                         </div>
                     </div>
-                    <div class="module-clickable bg-purple-100 border-2 border-purple-200" onclick="showModuleModal('TVA')">
+                    <div class="module-clickable bg-purple-100 border-2 border-purple-200 editable" data-element="module-tva" onclick="showModuleModal('TVA')">
                         <div class="text-center">
                             <h3 class="font-bold text-purple-800 text-lg">TVA</h3>
                             <p class="text-sm text-purple-600 mb-2">Taxe sur la Valeur Ajoutée</p>
-                            <p class="text-2xl font-bold text-purple-800">26.07 GiB</p>
+                            <p class="text-2xl font-bold text-purple-800">26.07 Go</p>
                             <p class="text-sm text-purple-600">10.7%</p>
                         </div>
                     </div>
-                    <div class="module-clickable bg-gray-100 border-2 border-gray-200" onclick="showModuleModal('GL')">
+                    <div class="module-clickable bg-gray-100 border-2 border-gray-200 editable" data-element="module-gl" onclick="showModuleModal('GL')">
                         <div class="text-center">
                             <h3 class="font-bold text-gray-800 text-lg">GL</h3>
                             <p class="text-sm text-gray-600 mb-2">General Ledger</p>
-                            <p class="text-2xl font-bold text-gray-800">8.48 GiB</p>
+                            <p class="text-2xl font-bold text-gray-800">8.48 Go</p>
                             <p class="text-sm text-gray-600">3.5%</p>
                         </div>
                     </div>
@@ -347,17 +515,22 @@
 
             <!-- Modèles -->
             <div id="modeles" class="tab-content">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6">Analyse par Modèle Métier</h2>
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 editable" data-element="models-title">Analyse par Modèle Métier</h2>
                 
                 <!-- Interprétations -->
-                <div class="bg-purple-50 border-l-4 border-purple-500 p-6 mb-6">
+                <div class="bg-purple-50 border-l-4 border-purple-500 p-6 mb-6 editable" data-element="models-interpretation">
                     <p class="text-purple-800 mb-4">Au niveau granulaire, les objets métier les plus consommateurs sont les pièces clients (ITEM), les pièces fournisseurs (AP PIECES), les groupes comptables, et les lignes de reporting.</p>
                     <p class="text-purple-800">Ces objets sont liés à l'activité opérationnelle quotidienne, donc leur purge a un effet direct sur les performances et l'environnement.</p>
                 </div>
 
                 <!-- Graphique modèles -->
-                <div class="bg-white p-6 rounded-lg shadow mb-6">
-                    <h3 class="text-xl font-bold mb-4">Performance par Modèle Métier</h3>
+                <div class="bg-white p-6 rounded-lg shadow mb-6 editable" data-element="models-chart">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold editable" data-element="models-chart-title">Performance par Modèle Métier (22 modèles)</h3>
+                        <button onclick="changeChartType('modelesChart')" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
                     <div class="chart-container">
                         <canvas id="modelesChart"></canvas>
                     </div>
@@ -365,38 +538,38 @@
 
                 <!-- Modèles cliquables -->
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div class="module-clickable bg-blue-100 border-2 border-blue-200" onclick="showModelModal('ITEM')">
+                    <div class="module-clickable bg-blue-100 border-2 border-blue-200 editable" data-element="model-item" onclick="showModelModal('ITEM')">
                         <div class="text-center">
                             <h3 class="font-bold text-blue-800 text-lg">ITEM</h3>
-                            <p class="text-2xl font-bold text-blue-800">71.92 GiB</p>
+                            <p class="text-2xl font-bold text-blue-800">71.92 Go</p>
                             <p class="text-sm text-blue-600">29.6%</p>
                         </div>
                     </div>
-                    <div class="module-clickable bg-green-100 border-2 border-green-200" onclick="showModelModal('AP_PIECES')">
+                    <div class="module-clickable bg-green-100 border-2 border-green-200 editable" data-element="model-ap" onclick="showModelModal('AP_PIECES')">
                         <div class="text-center">
                             <h3 class="font-bold text-green-800 text-lg">AP PIECES</h3>
-                            <p class="text-2xl font-bold text-green-800">56.00 GiB</p>
+                            <p class="text-2xl font-bold text-green-800">56.00 Go</p>
                             <p class="text-sm text-green-600">23.1%</p>
                         </div>
                     </div>
-                    <div class="module-clickable bg-yellow-100 border-2 border-yellow-200" onclick="showModelModal('GROUP')">
+                    <div class="module-clickable bg-yellow-100 border-2 border-yellow-200 editable" data-element="model-group" onclick="showModelModal('GROUP')">
                         <div class="text-center">
                             <h3 class="font-bold text-yellow-800 text-lg">GROUP</h3>
-                            <p class="text-2xl font-bold text-yellow-800">32.34 GiB</p>
+                            <p class="text-2xl font-bold text-yellow-800">32.34 Go</p>
                             <p class="text-sm text-yellow-600">13.3%</p>
                         </div>
                     </div>
-                    <div class="module-clickable bg-purple-100 border-2 border-purple-200" onclick="showModelModal('RPTG_DETAIL')">
+                    <div class="module-clickable bg-purple-100 border-2 border-purple-200 editable" data-element="model-rptg" onclick="showModelModal('RPTG_DETAIL')">
                         <div class="text-center">
                             <h3 class="font-bold text-purple-800 text-lg">RPTG DETAIL</h3>
-                            <p class="text-2xl font-bold text-purple-800">26.61 GiB</p>
+                            <p class="text-2xl font-bold text-purple-800">26.61 Go</p>
                             <p class="text-sm text-purple-600">11.0%</p>
                         </div>
                     </div>
-                    <div class="module-clickable bg-red-100 border-2 border-red-200" onclick="showModelModal('TVA')">
+                    <div class="module-clickable bg-red-100 border-2 border-red-200 editable" data-element="model-tva" onclick="showModelModal('TVA')">
                         <div class="text-center">
                             <h3 class="font-bold text-red-800 text-lg">TVA</h3>
-                            <p class="text-2xl font-bold text-red-800">26.07 GiB</p>
+                            <p class="text-2xl font-bold text-red-800">26.07 Go</p>
                             <p class="text-sm text-red-600">10.7%</p>
                         </div>
                     </div>
@@ -405,25 +578,25 @@
 
             <!-- Infrastructure -->
             <div id="infrastructure" class="tab-content">
-                <h2 class="text-3xl font-bold text-gray-800 mb-6">Infrastructure Complète</h2>
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 editable" data-element="infra-title">Infrastructure Complète</h2>
                 
                 <!-- Méthodologie -->
-                <div class="bg-white p-6 rounded-lg shadow mb-6">
-                    <h3 class="text-xl font-bold mb-4">Méthodologie</h3>
+                <div class="bg-white p-6 rounded-lg shadow mb-6 editable" data-element="methodology">
+                    <h3 class="text-xl font-bold mb-4 editable" data-element="method-title">Méthodologie</h3>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                        <div>
+                        <div class="editable" data-element="variables">
                             <h4 class="font-semibold mb-3">Variables et Notations</h4>
                             <div class="space-y-2 text-sm">
-                                <p><strong>Vp</strong> = Volume purgé (242.84 GiB)</p>
+                                <p><strong>Vp</strong> = Volume purgé (242.84 Go)</p>
                                 <p><strong>E</strong> = Nombre d'environnements (5 pour STIME)</p>
                                 <p><strong>Be</strong> = Copies de backup par environnement</p>
                                 <p><strong>r</strong> = Ratio d'archivage (0 pour STIME)</p>
-                                <p><strong>f</strong> = Facteur CO₂ (0.209 kg/GiB·an)</p>
+                                <p><strong>f</strong> = Facteur CO₂ (0.0175 kg/Go·an)</p>
                                 <p><strong>t</strong> = Durée en années</p>
                             </div>
                         </div>
-                        <div>
+                        <div class="editable" data-element="formulas">
                             <h4 class="font-semibold mb-3">Formules</h4>
                             <div class="bg-gray-50 p-4 rounded space-y-2 text-sm font-mono">
                                 <p><strong>ΔV = Vp × (1−r) × Σ(1+Be)</strong></p>
@@ -434,10 +607,10 @@
                 </div>
 
                 <!-- Configuration STIME -->
-                <div class="bg-white p-6 rounded-lg shadow mb-6">
-                    <h3 class="text-xl font-bold mb-4">Configuration STIME (Simulation)</h3>
+                <div class="bg-white p-6 rounded-lg shadow mb-6 editable" data-element="stime-config">
+                    <h3 class="text-xl font-bold mb-4 editable" data-element="config-title">Configuration STIME (Simulation)</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                        <div class="editable" data-element="environments">
                             <h4 class="font-semibold mb-2">Environnements</h4>
                             <ul class="space-y-1 text-sm">
                                 <li>• Production : 1 + 3 backups = 4 copies</li>
@@ -447,7 +620,7 @@
                                 <li>• Formation : 1 + 0 backup = 1 copie</li>
                             </ul>
                         </div>
-                        <div>
+                        <div class="editable" data-element="factor">
                             <div class="bg-blue-50 p-4 rounded">
                                 <p class="font-semibold text-blue-800">Total facteur : ×12</p>
                                 <p class="text-sm text-blue-600">Chaque Go purgé en production = 12 Go économisés dans l'infrastructure complète</p>
@@ -457,32 +630,37 @@
                 </div>
 
                 <!-- Résultats -->
-                <div class="bg-white p-6 rounded-lg shadow mb-6">
-                    <h3 class="text-xl font-bold mb-4">Résultats du Rapport</h3>
+                <div class="bg-white p-6 rounded-lg shadow mb-6 editable" data-element="results">
+                    <h3 class="text-xl font-bold mb-4 editable" data-element="results-title">Résultats du Rapport</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
+                        <div class="editable" data-element="direct-impact">
                             <h4 class="font-semibold mb-3">Impact Direct</h4>
                             <div class="space-y-2 text-sm">
-                                <p>Volume purgé en production : <strong>242.84 GiB</strong></p>
-                                <p>Volume économisé infrastructure : <strong>2,914.08 GiB</strong></p>
-                                <p>Impact CO₂ annuel : <strong>609.03 kg/an</strong></p>
-                                <p>Impact sur 5 ans : <strong>3,045.15 kg CO₂</strong></p>
+                                <p>Volume purgé en production : <strong>242.84 Go</strong></p>
+                                <p>Volume économisé infrastructure : <strong>2914 Go</strong></p>
+                                <p>Impact CO₂ annuel : <strong>50.87 kg/an</strong></p>
+                                <p>Impact sur 5 ans : <strong>254.35 kg CO₂</strong></p>
                             </div>
                         </div>
-                        <div>
+                        <div class="editable" data-element="env-equivalences">
                             <h4 class="font-semibold mb-3">Équivalences Environnementales</h4>
                             <div class="space-y-2 text-sm">
-                                <p>🚗 <strong>5913 km</strong> en voiture électrique</p>
-                                <p>🚌 <strong>5390 km</strong> en bus thermique</p>
-                                <p>🛴 <strong>24360 km</strong> en trottinette électrique</p>
+                                <p>🚗 <strong>494 km</strong> en voiture électrique</p>
+                                <p>🚌 <strong>450 km</strong> en bus thermique</p>
+                                <p>🛴 <strong>2035 km</strong> en trottinette électrique</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Graphique amplification -->
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h3 class="text-xl font-bold mb-4">Facteur Multiplicateur par Type d'Infrastructure</h3>
+                <div class="bg-white p-6 rounded-lg shadow editable" data-element="amplification-chart">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold editable" data-element="amplif-title">Facteur Multiplicateur par Type d'Infrastructure</h3>
+                        <button onclick="changeChartType('amplificationChart')" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
                     <div class="chart-container">
                         <canvas id="amplificationChart"></canvas>
                     </div>
@@ -491,33 +669,33 @@
 
             <!-- Calculateur -->
             <div id="calculateur" class="tab-content">
-                <div class="gradient-bg text-white py-8 rounded-lg mb-8">
+                <div class="gradient-bg text-white py-8 rounded-lg mb-8 editable" data-element="calc-header">
                     <div class="container mx-auto px-4">
                         <div class="text-center">
-                            <h1 class="text-4xl font-bold mb-2">
+                            <h1 class="text-4xl font-bold mb-2 editable" data-element="calc-title">
                                 <i class="fas fa-leaf mr-3"></i>
                                 Calculatrice ERP - Impact Environnemental
                             </h1>
-                            <p class="text-xl opacity-90">Analyse de l'impact des purges de données sur l'empreinte carbone</p>
+                            <p class="text-xl opacity-90 editable" data-element="calc-subtitle">Analyse de l'impact des purges de données sur l'empreinte carbone</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Configuration Section -->
                 <section class="mb-8">
-                    <div class="bg-white rounded-lg card-shadow p-6">
-                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <div class="bg-white rounded-lg card-shadow p-6 editable" data-element="calc-config">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center editable" data-element="config-section-title">
                             <i class="fas fa-cogs mr-3 text-blue-600"></i>
                             Configuration des Paramètres
                         </h2>
                         
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                             <!-- Paramètres de Base -->
-                            <div>
+                            <div class="editable" data-element="base-params">
                                 <h3 class="text-lg font-medium text-gray-700 mb-4">Paramètres de Base</h3>
                                 <div class="space-y-4">
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Volume Purgé (GiB)</label>
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Volume Purgé (Go)</label>
                                         <input type="number" id="volumePurged" value="242.84" step="0.01" 
                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
                                     </div>
@@ -527,15 +705,15 @@
                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
                                     </div>
                                     <div>
-                                        <label class="block text-sm font-medium text-gray-700 mb-2">Facteur CO₂ (kg/GiB·an)</label>
-                                        <input type="number" id="co2Factor" value="0.209" step="0.001"
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">Facteur CO₂ (kg/Go·an)</label>
+                                        <input type="number" id="co2Factor" value="0.0175" step="0.0001"
                                                class="w-full px-4 py-2 border border-gray-300 rounded-lg input-focus">
                                     </div>
                                 </div>
                             </div>
 
                             <!-- Profils Prédéfinis -->
-                            <div>
+                            <div class="editable" data-element="predefined-profiles">
                                 <h3 class="text-lg font-medium text-gray-700 mb-4">Profils Prédéfinis</h3>
                                 <div class="space-y-3">
                                     <button onclick="loadProfile('PME')" class="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-4 rounded-lg transition">
@@ -555,7 +733,7 @@
                         </div>
 
                         <!-- Configuration Environnements -->
-                        <div class="mt-8">
+                        <div class="mt-8 editable" data-element="env-config">
                             <h3 class="text-lg font-medium text-gray-700 mb-4">Configuration des Environnements</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4" id="environmentsConfig">
                                 <!-- Environnements seront ajoutés dynamiquement -->
@@ -566,14 +744,14 @@
 
                 <!-- Résultats Section -->
                 <section class="mb-8">
-                    <div class="bg-white rounded-lg card-shadow p-6">
-                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <div class="bg-white rounded-lg card-shadow p-6 editable" data-element="calc-results">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center editable" data-element="results-section-title">
                             <i class="fas fa-chart-line mr-3 text-green-600"></i>
                             Résultats de l'Analyse
                         </h2>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-                            <div class="metric-card-calc bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg">
+                            <div class="metric-card-calc bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-lg editable" data-element="calc-metric1">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <p class="text-blue-100 text-sm">Gains Totaux</p>
@@ -584,7 +762,7 @@
                                 </div>
                             </div>
                             
-                            <div class="metric-card-calc bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg">
+                            <div class="metric-card-calc bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-lg editable" data-element="calc-metric2">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <p class="text-green-100 text-sm">CO₂ Évité</p>
@@ -595,7 +773,7 @@
                                 </div>
                             </div>
                             
-                            <div class="metric-card-calc bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg">
+                            <div class="metric-card-calc bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-lg editable" data-element="calc-metric3">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <p class="text-purple-100 text-sm">Équivalent Voiture</p>
@@ -606,7 +784,7 @@
                                 </div>
                             </div>
                             
-                            <div class="metric-card-calc bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-lg">
+                            <div class="metric-card-calc bg-gradient-to-r from-orange-500 to-orange-600 text-white p-6 rounded-lg editable" data-element="calc-metric4">
                                 <div class="flex items-center justify-between">
                                     <div>
                                         <p class="text-orange-100 text-sm">Équivalent Trottinette</p>
@@ -619,7 +797,7 @@
                         </div>
 
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="bg-gray-50 p-4 rounded-lg editable" data-element="calc-details">
                                 <h4 class="font-medium text-gray-700 mb-3">Détail des Calculs</h4>
                                 <div class="space-y-2 text-sm">
                                     <div class="flex justify-between">
@@ -641,7 +819,7 @@
                                 </div>
                             </div>
                             
-                            <div class="bg-gray-50 p-4 rounded-lg">
+                            <div class="bg-gray-50 p-4 rounded-lg editable" data-element="calc-projections">
                                 <h4 class="font-medium text-gray-700 mb-3">Projections 5 ans</h4>
                                 <div class="space-y-2 text-sm">
                                     <div class="flex justify-between">
@@ -664,30 +842,45 @@
 
                 <!-- Visualisations Section -->
                 <section class="mb-8">
-                    <div class="bg-white rounded-lg card-shadow p-6">
-                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <div class="bg-white rounded-lg card-shadow p-6 editable" data-element="calc-visualizations">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center editable" data-element="viz-section-title">
                             <i class="fas fa-chart-bar mr-3 text-indigo-600"></i>
                             Visualisations
                         </h2>
                         
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                            <div>
-                                <h3 class="text-lg font-medium text-gray-700 mb-4">Répartition par Environnement</h3>
+                            <div class="editable" data-element="env-chart">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-medium text-gray-700">Répartition par Environnement</h3>
+                                    <button onclick="changeChartType('environmentChart')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-chart-pie"></i>
+                                    </button>
+                                </div>
                                 <div class="chart-container">
                                     <canvas id="environmentChart"></canvas>
                                 </div>
                             </div>
                             
-                            <div>
-                                <h3 class="text-lg font-medium text-gray-700 mb-4">Projections Temporelles</h3>
+                            <div class="editable" data-element="projection-chart">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-lg font-medium text-gray-700">Projections Temporelles</h3>
+                                    <button onclick="changeChartType('projectionChart')" class="text-blue-600 hover:text-blue-800">
+                                        <i class="fas fa-chart-line"></i>
+                                    </button>
+                                </div>
                                 <div class="chart-container">
                                     <canvas id="projectionChart"></canvas>
                                 </div>
                             </div>
                         </div>
                         
-                        <div class="mt-6">
-                            <h3 class="text-lg font-medium text-gray-700 mb-4">Analyse Waterfall - Accumulation des Gains</h3>
+                        <div class="mt-6 editable" data-element="waterfall-chart">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-medium text-gray-700">Analyse Waterfall - Accumulation des Gains</h3>
+                                <button onclick="changeChartType('waterfallChart')" class="text-blue-600 hover:text-blue-800">
+                                    <i class="fas fa-chart-bar"></i>
+                                </button>
+                            </div>
                             <div class="chart-container">
                                 <canvas id="waterfallChart"></canvas>
                             </div>
@@ -697,14 +890,14 @@
 
                 <!-- Summary Section -->
                 <section class="mb-8">
-                    <div class="bg-white rounded-lg card-shadow p-6">
-                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center">
+                    <div class="bg-white rounded-lg card-shadow p-6 editable" data-element="calc-summary">
+                        <h2 class="text-2xl font-semibold text-gray-800 mb-6 flex items-center editable" data-element="summary-section-title">
                             <i class="fas fa-clipboard-check mr-3 text-teal-600"></i>
                             Synthèse Exécutive
                         </h2>
                         
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-blue-50 p-6 rounded-lg">
+                            <div class="bg-blue-50 p-6 rounded-lg editable" data-element="env-impact">
                                 <h3 class="text-lg font-semibold text-blue-800 mb-3">Impact Environnemental</h3>
                                 <ul class="space-y-2 text-sm text-blue-700">
                                     <li class="flex items-start">
@@ -714,7 +907,7 @@
                                 </ul>
                             </div>
                             
-                            <div class="bg-green-50 p-6 rounded-lg">
+                            <div class="bg-green-50 p-6 rounded-lg editable" data-element="recommendations">
                                 <h3 class="text-lg font-semibold text-green-800 mb-3">Recommandations</h3>
                                 <ul class="space-y-2 text-sm text-green-700">
                                     <li class="flex items-start">
@@ -725,11 +918,11 @@
                             </div>
                         </div>
                         
-                        <div class="mt-6 bg-gray-50 p-6 rounded-lg">
+                        <div class="mt-6 bg-gray-50 p-6 rounded-lg editable" data-element="methodology-summary">
                             <h3 class="text-lg font-semibold text-gray-800 mb-3">Méthodologie</h3>
                             <div class="text-sm text-gray-600 space-y-2">
                                 <p><strong>Formule principale:</strong> ΔV = Vp × (1-r) × Σ(1+Be)</p>
-                                <p><strong>Impact CO₂:</strong> ΔCO₂ = ΔV × 0,209 kg CO₂/GiB·an (facteur ADEME)</p>
+                                <p><strong>Impact CO₂:</strong> ΔCO₂ = ΔV × 0,0175 kg CO₂/Go·an (facteur ADEME)</p>
                                 <p><strong>Équivalences:</strong> Voiture électrique: 1.03 kg CO₂/10km | Trottinette: 0.25 kg CO₂/10km</p>
                             </div>
                         </div>
@@ -776,11 +969,72 @@
         </div>
     </div>
 
+    <!-- Modal d'édition -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Éditer l'élément</h3>
+                <button onclick="closeModal('editModal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="editModalContent">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Texte</label>
+                        <textarea id="editText" class="w-full p-2 border rounded" rows="3"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Couleur</label>
+                        <input type="color" id="editColor" class="w-full h-10 border rounded">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Taille (px)</label>
+                        <input type="number" id="editSize" class="w-full p-2 border rounded" min="8" max="72">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="applyEdit()" class="px-4 py-2 bg-blue-500 text-white rounded">Appliquer</button>
+                        <button onclick="deleteElement()" class="px-4 py-2 bg-red-500 text-white rounded">Supprimer</button>
+                        <button onclick="closeModal('editModal')" class="px-4 py-2 bg-gray-500 text-white rounded">Annuler</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot -->
+    <div class="chatbot">
+        <div class="chatbot-window" id="chatbotWindow">
+            <div class="chatbot-header">
+                <h3>Assistant STIME</h3>
+                <button onclick="toggleChatbot()" class="text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="chatbot-messages" id="chatbotMessages">
+                <div class="message bot-message">
+                    Bonjour ! Je peux vous aider avec des informations sur les 235 tables, 9 modules, 22 modèles, volumes économisés (2914 Go), impact CO₂ (50.87 kg/an), ou formules de calcul. Que souhaitez-vous savoir ?
+                </div>
+            </div>
+            <div class="chatbot-input">
+                <input type="text" id="chatbotInput" placeholder="Posez votre question..." class="flex-1 p-2 border rounded-l" onkeypress="handleChatbotEnter(event)">
+                <button onclick="sendChatbotMessage()" class="px-4 py-2 bg-blue-500 text-white rounded-r">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+        <button class="chatbot-button" onclick="toggleChatbot()">
+            <i class="fas fa-comments"></i>
+        </button>
+    </div>
+
     <script>
         // Variables globales
         let environmentChart = null;
         let projectionChart = null;
         let waterfallChart = null;
+        let editingElement = null;
+        let editMode = false;
         
         // Configuration des profils
         const profiles = {
@@ -946,6 +1200,300 @@
             }
         };
 
+        // Données STIME pour le chatbot - CORRIGÉES
+        const stimeData = {
+            tables: 235,
+            modules: 9,
+            modeles: 22,
+            volumePurge: 242.84,
+            volumeEconomise: 2914,
+            co2Evite: 50.87, // Valeur corrigée
+            facteur: 12,
+            modulesList: ['AR', 'AP', 'RPTG', 'TVA', 'GL', 'RECO', 'FS', 'BI', 'PRE'],
+            topTables: ['PS_ITEM_DST', 'PS_VCHR_ACCTG_LINE', 'PS_RPTG_DETAIL_TBL', 'PS_PENDING_DST', 'PS_ITEM']
+        };
+
+        // Ajouter le menu contextuel
+        document.addEventListener('contextmenu', function(e) {
+            if (e.target.closest('.editable')) {
+                e.preventDefault();
+                const element = e.target.closest('.editable');
+                
+                // Supprimer les menus existants
+                document.querySelectorAll('.context-menu').forEach(menu => menu.remove());
+                
+                // Créer menu contextuel
+                const menu = document.createElement('div');
+                menu.className = 'context-menu';
+                menu.style.top = e.clientY + 'px';
+                menu.style.left = e.clientX + 'px';
+                
+                menu.innerHTML = `
+                    <div class="menu-item">
+                        <i class="fas fa-edit"></i> Modifier
+                    </div>
+                    <div class="menu-item">
+                        <i class="fas fa-trash"></i> Supprimer
+                    </div>
+                `;
+                
+                // Ajouter les événements
+                menu.querySelector('.menu-item:first-child').onclick = () => {
+                    editElement(element);
+                    menu.remove();
+                };
+                
+                menu.querySelector('.menu-item:last-child').onclick = () => {
+                    deleteElement();
+                    editingElement = element;
+                    menu.remove();
+                };
+                
+                document.body.appendChild(menu);
+                
+                // Fermer le menu en cliquant ailleurs
+                setTimeout(() => {
+                    document.addEventListener('click', function closeMenu() {
+                        menu.remove();
+                        document.removeEventListener('click', closeMenu);
+                    });
+                }, 0);
+            }
+        });
+
+        // Fonctions d'édition améliorées
+        function enableEditMode() {
+            editMode = true;
+            document.getElementById('editToolbar').style.display = 'block';
+            
+            // Ajouter les boutons d'édition et de couleur
+            document.querySelectorAll('.editable').forEach(element => {
+                element.style.position = 'relative';
+                
+                if (!element.querySelector('.edit-btn')) {
+                    const editBtn = document.createElement('button');
+                    editBtn.className = 'edit-btn';
+                    editBtn.innerHTML = '✏️';
+                    editBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        editElement(element);
+                    };
+                    element.appendChild(editBtn);
+                }
+                
+                if (!element.querySelector('.color-btn')) {
+                    const colorBtn = document.createElement('button');
+                    colorBtn.className = 'color-btn';
+                    colorBtn.innerHTML = '🎨';
+                    colorBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        showColorPicker(element);
+                    };
+                    element.appendChild(colorBtn);
+                }
+            });
+        }
+
+        function showColorPicker(element) {
+            const picker = document.createElement('input');
+            picker.type = 'color';
+            picker.value = rgbToHex(window.getComputedStyle(element).color);
+            picker.style.display = 'none';
+            document.body.appendChild(picker);
+            
+            picker.addEventListener('change', (e) => {
+                element.style.color = e.target.value;
+                saveChanges();
+                picker.remove();
+            });
+            
+            picker.click();
+        }
+
+        function editElement(element) {
+            editingElement = element;
+            
+            // Remplir le modal avec les valeurs actuelles
+            const textContent = element.textContent || element.innerText;
+            const color = window.getComputedStyle(element).color;
+            const fontSize = window.getComputedStyle(element).fontSize;
+            
+            document.getElementById('editText').value = textContent;
+            document.getElementById('editColor').value = rgbToHex(color);
+            document.getElementById('editSize').value = parseInt(fontSize);
+            
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function applyEdit() {
+            if (!editingElement) return;
+            
+            const newText = document.getElementById('editText').value;
+            const newColor = document.getElementById('editColor').value;
+            const newSize = document.getElementById('editSize').value;
+            
+            editingElement.textContent = newText;
+            editingElement.style.color = newColor;
+            editingElement.style.fontSize = newSize + 'px';
+            
+            closeModal('editModal');
+            saveChanges();
+        }
+
+        function deleteElement() {
+            if (!editingElement) return;
+            
+            if (confirm('Êtes-vous sûr de vouloir supprimer cet élément ?')) {
+                editingElement.style.display = 'none';
+                closeModal('editModal');
+                saveChanges();
+            }
+        }
+
+        function saveChanges() {
+            // Sauvegarder dans localStorage
+            const changes = {};
+            document.querySelectorAll('.editable').forEach(element => {
+                const id = element.getAttribute('data-element');
+                if (id) {
+                    changes[id] = {
+                        text: element.textContent,
+                        color: element.style.color,
+                        fontSize: element.style.fontSize,
+                        display: element.style.display
+                    };
+                }
+            });
+            
+            localStorage.setItem('stimeChanges', JSON.stringify(changes));
+            alert('Modifications sauvegardées !');
+        }
+
+        function loadChanges() {
+            const changes = localStorage.getItem('stimeChanges');
+            if (changes) {
+                const parsedChanges = JSON.parse(changes);
+                Object.keys(parsedChanges).forEach(id => {
+                    const element = document.querySelector(`[data-element="${id}"]`);
+                    if (element && parsedChanges[id]) {
+                        const change = parsedChanges[id];
+                        if (change.text) element.textContent = change.text;
+                        if (change.color) element.style.color = change.color;
+                        if (change.fontSize) element.style.fontSize = change.fontSize;
+                        if (change.display) element.style.display = change.display;
+                    }
+                });
+            }
+        }
+
+        // Fonctions de changement de style de graphique
+        function changeChartType(chartId) {
+            const types = ['bar', 'line', 'pie', 'doughnut'];
+            const currentChart = window[chartId.replace('Chart', '') + 'ChartInstance'];
+            
+            if (currentChart) {
+                const currentType = currentChart.config.type;
+                const currentIndex = types.indexOf(currentType);
+                const nextType = types[(currentIndex + 1) % types.length];
+                
+                currentChart.config.type = nextType;
+                currentChart.update();
+            }
+        }
+
+        // Fonctions Chatbot améliorées
+        function toggleChatbot() {
+            const window = document.getElementById('chatbotWindow');
+            window.style.display = window.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function handleChatbotEnter(event) {
+            if (event.key === 'Enter') {
+                sendChatbotMessage();
+            }
+        }
+
+        function sendChatbotMessage() {
+            const input = document.getElementById('chatbotInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            // Ajouter message utilisateur
+            addChatbotMessage(message, 'user');
+            
+            // Générer réponse
+            const response = generateChatbotResponse(message);
+            setTimeout(() => {
+                addChatbotMessage(response, 'bot');
+            }, 500);
+            
+            input.value = '';
+        }
+
+        function addChatbotMessage(message, type) {
+            const messages = document.getElementById('chatbotMessages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            messageDiv.textContent = message;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function generateChatbotResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Salutations
+            if (lowerMessage.includes('bonjour') || lowerMessage.includes('salut') || lowerMessage.includes('hello')) {
+                return 'Bonjour ! Comment puis-je vous aider avec l\'analyse STIME ?';
+            }
+            
+            // Questions sur les tables
+            if (lowerMessage.includes('table') || lowerMessage.includes('nombre de table')) {
+                return `Nous avons ${stimeData.tables} tables uniques analysées. Les plus volumineuses sont ${stimeData.topTables.slice(0,3).join(', ')}.`;
+            }
+            
+            // Questions sur les modules
+            if (lowerMessage.includes('module')) {
+                return `Il y a ${stimeData.modules} modules métier : ${stimeData.modulesList.join(', ')}. Les modules AR et AP représentent 66.7% des gains.`;
+            }
+            
+            // Questions sur les modèles
+            if (lowerMessage.includes('modèle') || lowerMessage.includes('modele')) {
+                return `L'analyse couvre ${stimeData.modeles} modèles métier au total. Les plus impactants sont ITEM (29.6%), AP PIECES (23.1%), et GROUP (13.3%).`;
+            }
+            
+            // Questions sur les volumes
+            if (lowerMessage.includes('volume') || lowerMessage.includes('go') || lowerMessage.includes('espace')) {
+                return `Volume purgé : ${stimeData.volumePurge} Go. Volume économisé avec l'infrastructure (×${stimeData.facteur}) : ${stimeData.volumeEconomise} Go.`;
+            }
+            
+            // Questions sur le CO2
+            if (lowerMessage.includes('co2') || lowerMessage.includes('carbone') || lowerMessage.includes('environnement')) {
+                return `Impact CO₂ évité : ${stimeData.co2Evite} kg/an, soit l'équivalent de 494 km en voiture électrique ou 2035 km en trottinette.`;
+            }
+            
+            // Questions sur les calculs
+            if (lowerMessage.includes('calcul') || lowerMessage.includes('formule') || lowerMessage.includes('facteur')) {
+                return `Formule principale : ΔV = Vp × (1-r) × Σ(1+Be). Facteur multiplicateur STIME : ×${stimeData.facteur}. Facteur CO₂ : 0.0175 kg/Go·an.`;
+            }
+            
+            // Au revoir
+            if (lowerMessage.includes('merci') || lowerMessage.includes('au revoir') || lowerMessage.includes('bye')) {
+                return 'Je vous en prie ! N\'hésitez pas si vous avez d\'autres questions sur l\'analyse STIME.';
+            }
+            
+            // Réponse par défaut
+            return 'Je peux vous renseigner sur les 235 tables, 9 modules, 22 modèles, volumes économisés, impact CO₂, ou formules de calcul. Pouvez-vous préciser votre question ?';
+        }
+
+        // Fonctions utilitaires
+        function rgbToHex(rgb) {
+            const result = rgb.match(/\d+/g);
+            if (!result || result.length < 3) return '#000000';
+            return '#' + ((1 << 24) + (parseInt(result[0]) << 16) + (parseInt(result[1]) << 8) + parseInt(result[2])).toString(16).slice(1);
+        }
+
         // Navigation par onglets
         function showTab(tabName) {
             const contents = document.querySelectorAll('.tab-content');
@@ -1003,7 +1551,7 @@
             document.getElementById(modalId).classList.remove('active');
         }
 
-        // Calculateur functions
+        // Fonctions du calculateur avec valeurs corrigées
         function loadProfile(profileName) {
             const profile = profiles[profileName];
             if (!profile) return;
@@ -1075,16 +1623,15 @@
         function calculateAll() {
             const volumePurged = parseFloat(document.getElementById('volumePurged')?.value) || 242.84;
             const archiveRatio = parseFloat(document.getElementById('archiveRatio')?.value) || 0;
-            const co2Factor = parseFloat(document.getElementById('co2Factor')?.value) || 0.209;
+            const co2Factor = parseFloat(document.getElementById('co2Factor')?.value) || 0.0175; // Valeur corrigée
             const environments = getEnvironmentsConfig();
 
             const duplicationFactor = calculateDuplicationFactor(environments);
             const totalVolumeEconomized = volumePurged * (1 - archiveRatio) * duplicationFactor;
             const annualCO2 = totalVolumeEconomized * co2Factor;
             
-            // Équivalences STIME exactes
-            const carEquivalent = annualCO2 === 609.03 ? 5913 : Math.round((annualCO2 / 1.03) * 10);
-            const scooterEquivalent = annualCO2 === 609.03 ? 24360 : Math.round((annualCO2 / 0.25) * 10);
+            const carEquivalent = Math.round((annualCO2 / 1.03) * 10);
+            const scooterEquivalent = Math.round((annualCO2 / 0.25) * 10);
             
             const totalCO2_5years = annualCO2 * 5;
             const totalStorage_5years = totalVolumeEconomized * 5;
@@ -1114,19 +1661,19 @@
 
         function updateDisplay(results) {
             if (document.getElementById('totalGains')) {
-                document.getElementById('totalGains').textContent = `${results.totalVolumeEconomized.toFixed(2)} GiB`;
+                document.getElementById('totalGains').textContent = `${results.totalVolumeEconomized.toFixed(2)} Go`;
                 document.getElementById('totalGainsTiB').textContent = `${(results.totalVolumeEconomized / 1024).toFixed(2)} TiB`;
                 document.getElementById('co2Avoided').textContent = `${results.annualCO2.toFixed(2)}`;
                 document.getElementById('carEquivalent').textContent = `${results.carEquivalent.toLocaleString()}`;
                 document.getElementById('scooterEquivalent').textContent = `${results.scooterEquivalent.toLocaleString()}`;
                 
-                document.getElementById('initialVolume').textContent = `${results.volumePurged.toFixed(2)} GiB`;
+                document.getElementById('initialVolume').textContent = `${results.volumePurged.toFixed(2)} Go`;
                 document.getElementById('duplicationFactor').textContent = `×${results.duplicationFactor}`;
-                document.getElementById('totalVolumeEconomized').textContent = `${results.totalVolumeEconomized.toFixed(2)} GiB`;
+                document.getElementById('totalVolumeEconomized').textContent = `${results.totalVolumeEconomized.toFixed(2)} Go`;
                 document.getElementById('annualCO2').textContent = `${results.annualCO2.toFixed(2)} kg`;
                 
                 document.getElementById('totalCO2_5years').textContent = `${results.totalCO2_5years.toFixed(2)} kg`;
-                document.getElementById('totalStorage_5years').textContent = `${results.totalStorage_5years.toFixed(2)} GiB`;
+                document.getElementById('totalStorage_5years').textContent = `${results.totalStorage_5years.toFixed(2)} Go`;
                 document.getElementById('carEquivalent_5years').textContent = `${results.carEquivalent_5years.toLocaleString()} km`;
 
                 updateSummary(results);
@@ -1134,7 +1681,7 @@
         }
 
         function updateSummary(results) {
-            const environmental = `Réduction de ${results.annualCO2.toFixed(2)} kg CO₂/an grâce à l'économie de ${results.totalVolumeEconomized.toFixed(2)} GiB de stockage, équivalent à ${results.carEquivalent.toLocaleString()} km en voiture évités.`;
+            const environmental = `Réduction de ${results.annualCO2.toFixed(2)} kg CO₂/an grâce à l'économie de ${results.totalVolumeEconomized.toFixed(2)} Go de stockage, équivalent à ${results.carEquivalent.toLocaleString()} km en voiture évités.`;
             const recommendations = `Focus sur les modules AR et AP qui représentent 66.7% des gains. Potentiel d'optimisation : ${(results.totalCO2_5years / 1000).toFixed(1)} tonnes CO₂ sur 5 ans.`;
             
             if (document.getElementById('summaryEnvironmental')) {
@@ -1184,8 +1731,20 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `${context.label}: ${context.parsed.toFixed(2)} GiB`;
+                                    return `${context.label}: ${context.parsed.toFixed(2)} Go`;
                                 }
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            if (confirm(`Supprimer l'élément "${labels[index]}" ?`)) {
+                                labels.splice(index, 1);
+                                values.splice(index, 1);
+                                environmentChart.data.labels = labels;
+                                environmentChart.data.datasets[0].data = values;
+                                environmentChart.update();
                             }
                         }
                     }
@@ -1210,7 +1769,7 @@
                 data: {
                     labels: years.map(y => `Année ${y}`),
                     datasets: [{
-                        label: 'Stockage (GiB)',
+                        label: 'Stockage (Go)',
                         data: storageData,
                         borderColor: '#3B82F6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
@@ -1239,7 +1798,7 @@
                             position: 'left',
                             title: {
                                 display: true,
-                                text: 'Stockage (GiB)'
+                                text: 'Stockage (Go)'
                             }
                         },
                         y1: {
@@ -1292,7 +1851,7 @@
                 data: {
                     labels: labels,
                     datasets: [{
-                        label: 'Volume (GiB)',
+                        label: 'Volume (Go)',
                         data: values,
                         backgroundColor: colors,
                         borderColor: colors,
@@ -1309,7 +1868,7 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    return `${context.parsed.y.toFixed(2)} GiB`;
+                                    return `${context.parsed.y.toFixed(2)} Go`;
                                 }
                             }
                         }
@@ -1319,7 +1878,23 @@
                             beginAtZero: true,
                             title: {
                                 display: true,
-                                text: 'Volume (GiB)'
+                                text: 'Volume (Go)'
+                            }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            if (index > 0 && index < labels.length - 1) {
+                                if (confirm(`Supprimer l'élément "${labels[index]}" ?`)) {
+                                    labels.splice(index, 1);
+                                    values.splice(index, 1);
+                                    colors.splice(index, 1);
+                                    waterfallChart.data.labels = labels;
+                                    waterfallChart.data.datasets[0].data = values;
+                                    waterfallChart.data.datasets[0].backgroundColor = colors;
+                                    waterfallChart.update();
+                                }
                             }
                         }
                     }
@@ -1330,8 +1905,8 @@
         // Initialisation
         document.addEventListener('DOMContentLoaded', function() {
             initCharts();
+            loadChanges();
             
-            // Charger profil STIME par défaut si on est sur la calculatrice
             setTimeout(() => {
                 if (document.getElementById('volumePurged')) {
                     loadProfile('STIME');
@@ -1340,17 +1915,17 @@
         });
 
         function initCharts() {
-            // Graphique avant/après
+            // Graphique avant/après - HISTOGRAMME SÉPARÉ
             const ctx1 = document.getElementById('beforeAfterChart')?.getContext('2d');
             if (ctx1) {
-                new Chart(ctx1, {
-                    type: 'bar',
+                window.beforeAfterChartInstance = new Chart(ctx1, {
+                    type: 'bar', // HISTOGRAMME
                     data: {
-                        labels: ['Avant Purge', 'Après Purge', 'Volume Économisé', 'Sur 5 ans'],
+                        labels: ['Avant Purge', 'Après Purge'],
                         datasets: [{
-                            label: 'Volume (GiB)',
-                            data: [4556.96, 4314.12, 2914.08, 14570.4],
-                            backgroundColor: ['#ef4444', '#f59e0b', '#10b981', '#3b82f6']
+                            label: 'Volume (Go)',
+                            data: [4557, 4314],
+                            backgroundColor: ['#ef4444', '#f59e0b']
                         }]
                     },
                     options: {
@@ -1359,23 +1934,36 @@
                         plugins: {
                             title: {
                                 display: true,
-                                text: 'Évolution du Volume de Stockage'
+                                text: 'Avant / Après Purge'
+                            }
+                        },
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const chart = window.beforeAfterChartInstance;
+                                if (confirm(`Supprimer "${chart.data.labels[index]}" ?`)) {
+                                    chart.data.labels.splice(index, 1);
+                                    chart.data.datasets[0].data.splice(index, 1);
+                                    chart.data.datasets[0].backgroundColor.splice(index, 1);
+                                    chart.update();
+                                }
                             }
                         }
                     }
                 });
             }
 
-            // Graphique CO2
-            const ctx2 = document.getElementById('co2Chart')?.getContext('2d');
+            // Nouveau graphique gains - HISTOGRAMME SÉPARÉ
+            const ctx2 = document.getElementById('gainsChart')?.getContext('2d');
             if (ctx2) {
-                new Chart(ctx2, {
-                    type: 'doughnut',
+                window.gainsChartInstance = new Chart(ctx2, {
+                    type: 'bar', // HISTOGRAMME
                     data: {
-                        labels: ['CO₂ Direct', 'CO₂ Infrastructure'],
+                        labels: ['Espace Économisé', '×12 Infrastructure', 'Dans 5 ans'],
                         datasets: [{
-                            data: [50.87, 609.03],
-                            backgroundColor: ['#10b981', '#3b82f6']
+                            label: 'Volume (Go)',
+                            data: [243, 2914, 14570],
+                            backgroundColor: ['#10b981', '#3b82f6', '#8b5cf6']
                         }]
                     },
                     options: {
@@ -1384,7 +1972,19 @@
                         plugins: {
                             title: {
                                 display: true,
-                                text: 'Impact CO₂ (kg/an)'
+                                text: 'Gains Économisés'
+                            }
+                        },
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const chart = window.gainsChartInstance;
+                                if (confirm(`Supprimer "${chart.data.labels[index]}" ?`)) {
+                                    chart.data.labels.splice(index, 1);
+                                    chart.data.datasets[0].data.splice(index, 1);
+                                    chart.data.datasets[0].backgroundColor.splice(index, 1);
+                                    chart.update();
+                                }
                             }
                         }
                     }
@@ -1394,12 +1994,12 @@
             // Graphique tables
             const ctx3 = document.getElementById('tablesChart')?.getContext('2d');
             if (ctx3) {
-                new Chart(ctx3, {
+                window.tablesChartInstance = new Chart(ctx3, {
                     type: 'bar',
                     data: {
                         labels: ['PS_ITEM_DST', 'PS_VCHR_ACCTG_LINE', 'PS_RPTG_DETAIL_TBL', 'PS_PENDING_DST', 'PS_ITEM', 'PS_VAT_RPT_INST2', 'PS_PENDING_ITEM', 'PS_VAT_XREF_ITEM', 'PS_RPTG_BALANCE', 'PS_NP_RPTG_OPEN_I'],
                         datasets: [{
-                            label: 'Volume (GiB)',
+                            label: 'Volume (Go)',
                             data: [45.31, 44.06, 26.61, 13.59, 11.72, 9.84, 9.53, 7.81, 7.46, 7.40],
                             backgroundColor: '#3b82f6'
                         }]
@@ -1407,7 +2007,18 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        indexAxis: 'y'
+                        indexAxis: 'y',
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const chart = window.tablesChartInstance;
+                                if (confirm(`Supprimer "${chart.data.labels[index]}" ?`)) {
+                                    chart.data.labels.splice(index, 1);
+                                    chart.data.datasets[0].data.splice(index, 1);
+                                    chart.update();
+                                }
+                            }
+                        }
                     }
                 });
             }
@@ -1415,7 +2026,7 @@
             // Graphique modules
             const ctx5 = document.getElementById('modulesChart')?.getContext('2d');
             if (ctx5) {
-                new Chart(ctx5, {
+                window.modulesChartInstance = new Chart(ctx5, {
                     type: 'pie',
                     data: {
                         labels: ['AR', 'AP', 'RPTG', 'TVA', 'GL'],
@@ -1426,7 +2037,19 @@
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false
+                        maintainAspectRatio: false,
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const chart = window.modulesChartInstance;
+                                if (confirm(`Supprimer "${chart.data.labels[index]}" ?`)) {
+                                    chart.data.labels.splice(index, 1);
+                                    chart.data.datasets[0].data.splice(index, 1);
+                                    chart.data.datasets[0].backgroundColor.splice(index, 1);
+                                    chart.update();
+                                }
+                            }
+                        }
                     }
                 });
             }
@@ -1434,19 +2057,31 @@
             // Graphique modèles
             const ctx7 = document.getElementById('modelesChart')?.getContext('2d');
             if (ctx7) {
-                new Chart(ctx7, {
+                window.modelesChartInstance = new Chart(ctx7, {
                     type: 'bar',
                     data: {
                         labels: ['ITEM', 'AP PIECES', 'GROUP', 'RPTG DETAIL', 'TVA'],
                         datasets: [{
-                            label: 'Volume (GiB)',
+                            label: 'Volume (Go)',
                             data: [71.92, 56.00, 32.34, 26.61, 26.07],
                             backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']
                         }]
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false
+                        maintainAspectRatio: false,
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const chart = window.modelesChartInstance;
+                                if (confirm(`Supprimer "${chart.data.labels[index]}" ?`)) {
+                                    chart.data.labels.splice(index, 1);
+                                    chart.data.datasets[0].data.splice(index, 1);
+                                    chart.data.datasets[0].backgroundColor.splice(index, 1);
+                                    chart.update();
+                                }
+                            }
+                        }
                     }
                 });
             }
@@ -1454,19 +2089,31 @@
             // Graphique amplification
             const ctx10 = document.getElementById('amplificationChart')?.getContext('2d');
             if (ctx10) {
-                new Chart(ctx10, {
+                window.amplificationChartInstance = new Chart(ctx10, {
                     type: 'bar',
                     data: {
                         labels: ['PME (×6)', 'ETI (×12)', 'Groupe (×20)', 'STIME (×12)'],
                         datasets: [{
-                            label: 'Volume Économisé (GiB)',
+                            label: 'Volume Économisé (Go)',
                             data: [1457, 2914, 4857, 2914],
                             backgroundColor: ['#3b82f6', '#10b981', '#8b5cf6', '#f59e0b']
                         }]
                     },
                     options: {
                         responsive: true,
-                        maintainAspectRatio: false
+                        maintainAspectRatio: false,
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const chart = window.amplificationChartInstance;
+                                if (confirm(`Supprimer "${chart.data.labels[index]}" ?`)) {
+                                    chart.data.labels.splice(index, 1);
+                                    chart.data.datasets[0].data.splice(index, 1);
+                                    chart.data.datasets[0].backgroundColor.splice(index, 1);
+                                    chart.update();
+                                }
+                            }
+                        }
                     }
                 });
             }
@@ -1474,7 +2121,7 @@
 
         // Fermer modals en cliquant à l'extérieur
         window.onclick = function(event) {
-            const modals = ['tableModal', 'moduleModal', 'modelModal'];
+            const modals = ['tableModal', 'moduleModal', 'modelModal', 'editModal'];
             modals.forEach(modalId => {
                 const modal = document.getElementById(modalId);
                 if (event.target === modal) {
