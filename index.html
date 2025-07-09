@@ -573,6 +573,13 @@
                             <p class="text-sm text-red-600">10.7%</p>
                         </div>
                     </div>
+                    <div class="module-clickable bg-orange-100 border-2 border-orange-200 editable" data-element="model-autres" onclick="showModelModal('AUTRES')">
+                        <div class="text-center">
+                            <h3 class="font-bold text-orange-800 text-lg">AUTRES</h3>
+                            <p class="text-2xl font-bold text-orange-800">29.91 Go</p>
+                            <p class="text-sm text-orange-600">12.3%</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -1197,6 +1204,11 @@
                 function: 'Gestion de la taxe sur la valeur ajoutée',
                 processes: 'Déclarations TVA',
                 impact: '10.7% des gains'
+            },
+            'AUTRES': {
+                function: 'Autres modèles métier (17 modèles)',
+                processes: 'Divers processus métier',
+                impact: '12.3% des gains'
             }
         };
 
@@ -2054,17 +2066,17 @@
                 });
             }
 
-            // Graphique modèles
+            // Graphique modèles - MODIFIÉ AVEC AUTRES
             const ctx7 = document.getElementById('modelesChart')?.getContext('2d');
             if (ctx7) {
                 window.modelesChartInstance = new Chart(ctx7, {
                     type: 'bar',
                     data: {
-                        labels: ['ITEM', 'AP PIECES', 'GROUP', 'RPTG DETAIL', 'TVA'],
+                        labels: ['ITEM', 'AP PIECES', 'GROUP', 'RPTG DETAIL', 'TVA', 'AUTRES'],
                         datasets: [{
                             label: 'Volume (Go)',
-                            data: [71.92, 56.00, 32.34, 26.61, 26.07],
-                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444']
+                            data: [71.92, 56.00, 32.34, 26.61, 26.07, 29.91],
+                            backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#f97316']
                         }]
                     },
                     options: {
